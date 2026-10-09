@@ -2,6 +2,8 @@
 
 ## 0.4.0 — preview
 
+- Fixed NS2 Pro sticks topping out at about 60% while Steam is running (full push behaved like a
+  light push): factory calibration is now remembered, and otherwise stick travel is learned.
 - Upgraded to .NET 10 (LTS); .NET 8 support ends in November 2026. Updated test packages and CI actions.
 - Rumble forwarding from games to Xbox (XInput) and NS2 Pro (HD rumble), with a per-profile switch.
 - PS button from Xbox Guide / NS2 Home; touchpad click from NS2 Capture.

@@ -17,10 +17,15 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
     private volatile int _rumble; // large << 8 | small
     private long _receivedAt;
     private bool _hasState;
+    private readonly Switch2CalibrationCache _calibrationCache;
     private string _status = L.T("尋找 NS2 Pro（USB）...", "Looking for NS2 Pro (USB)...");
     private bool _disposed;
 
-    public Switch2InputReader() => _worker = Task.Run(() => RunAsync(_stop.Token));
+    public Switch2InputReader(Switch2CalibrationCache? calibrationCache = null)
+    {
+        _calibrationCache = calibrationCache ?? new Switch2CalibrationCache();
+        _worker = Task.Run(() => RunAsync(_stop.Token));
+    }
     public string Status { get { lock (_gate) return _status; } }
 
     public bool TryGetState(out State state)
@@ -67,19 +72,21 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
                     if (paths.Length == 0) throw new IOException(L.T("等待 NS2 Pro USB 連線（不支援藍牙）。", "Waiting for an NS2 Pro over USB (Bluetooth is not supported)."));
                     SetStatus(L.T("初始化 NS2 Pro USB 與搖桿校準...", "Initializing NS2 Pro USB and stick calibration..."));
                     (Switch2StickCalibration Left, Switch2StickCalibration Right) calibration;
-                    bool sharedMode = false;
+                    bool sharedMode = false, cachedCalibration = false;
                     try
                     {
                         using var usb = new Switch2UsbControl(paths[0]);
                         calibration = Switch2Protocol.Initialize(usb, token);
+                        _calibrationCache.Save(calibration.Left, calibration.Right);
                     }
                     catch (Win32Exception ex) when (ex.NativeErrorCode is 5 or 32)
                     {
                         // Steam can own USB control while HID reports remain shareable.
                         // Do not fight ownership or install a different driver.
                         sharedMode = true;
-                        calibration = (Switch2StickCalibration.Nominal, Switch2StickCalibration.Nominal);
-                        SetStatus(L.T("NS2 Pro HID 共用模式：等待 Steam 初始化（使用預設校準）。", "NS2 Pro shared HID mode: waiting for Steam to initialize it (nominal calibration)."));
+                        cachedCalibration = _calibrationCache.TryLoad(out var left, out var right);
+                        calibration = cachedCalibration ? (left, right) : (Switch2StickCalibration.Nominal, Switch2StickCalibration.Nominal);
+                        SetStatus(L.T("NS2 Pro HID 共用模式：等待 Steam 初始化。", "NS2 Pro shared HID mode: waiting for Steam to initialize it."));
                     }
 
                     var hidPaths = WindowsDevicePaths.Find(WindowsDevicePaths.Hid);
@@ -87,6 +94,9 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
                     using var handle = Switch2UsbControl.CreateFileW(hidPaths[0], 0x80000000, 3, IntPtr.Zero, 3, 0x40000000, IntPtr.Zero);
                     if (handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
                     using var stream = new FileStream(handle, FileAccess.Read, 64, isAsync: true);
+                    // Without any real calibration, learn each stick's travel from the reports themselves.
+                    AdaptiveStickCalibration? adaptiveLeft = null, adaptiveRight = null;
+                    if (sharedMode && !cachedCalibration) { adaptiveLeft = new(); adaptiveRight = new(); }
                     using var rumbleCts = CancellationTokenSource.CreateLinkedTokenSource(token);
                     var rumbleTask = RunRumbleAsync(hidPaths[0], rumbleCts.Token);
                     try
@@ -98,6 +108,12 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
                             timeout.CancelAfter(TimeSpan.FromSeconds(2));
                             int length = await stream.ReadAsync(report, timeout.Token).ConfigureAwait(false);
                             if (length == 0) throw new IOException(L.T("NS2 Pro 已斷線。", "NS2 Pro disconnected."));
+                            if (adaptiveLeft is not null && adaptiveRight is not null && length == 64 && report[0] == 0x05)
+                            {
+                                calibration = (
+                                    adaptiveLeft.Observe(Switch2StickCalibration.UnpackX(report.AsSpan(11)), Switch2StickCalibration.UnpackY(report.AsSpan(11))),
+                                    adaptiveRight.Observe(Switch2StickCalibration.UnpackX(report.AsSpan(14)), Switch2StickCalibration.UnpackY(report.AsSpan(14))));
+                            }
                             if (!Switch2ReportParser.TryParse(report.AsSpan(0, length), calibration.Left, calibration.Right, out var state))
                                 continue;
                             bool hasMotion = Switch2ReportParser.TryParseMotion(report.AsSpan(0, length), out var motion);
@@ -108,7 +124,9 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
                                 _hasMotion = hasMotion;
                                 _receivedAt = Stopwatch.GetTimestamp();
                                 _hasState = true;
-                                _status = sharedMode ? L.T("NS2 Pro（HID 共用，預設校準）", "NS2 Pro (shared HID, nominal calibration)") : L.T("NS2 Pro（USB，原廠／使用者校準）", "NS2 Pro (USB, factory/user calibration)");
+                                _status = !sharedMode ? L.T("NS2 Pro（USB，原廠／使用者校準）", "NS2 Pro (USB, factory/user calibration)")
+                                    : cachedCalibration ? L.T("NS2 Pro（HID 共用，已記住的原廠校準）", "NS2 Pro (shared HID, remembered factory calibration)")
+                                    : L.T("NS2 Pro（HID 共用，自動學習搖桿行程；關閉 Steam 開一次映射可讀取原廠校準）", "NS2 Pro (shared HID, learning stick travel; map once with Steam closed to read the factory calibration)");
                             }
                         }
                     }
