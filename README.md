@@ -5,7 +5,7 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.4.1 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.5.0 preview.** English and Traditional Chinese UI.
 
 **The name:** TSCC stands for **T**riangle, **S**quare, **C**ross and **C**ircle, the four
 PlayStation face buttons this tool makes your games show. The project was called *YnyrWASD*
@@ -14,6 +14,10 @@ until 0.4.0; 0.4.1 moves your existing profiles and settings over automatically.
 中文使用說明：[繁體中文](docs/README.zh-TW.md)
 
 ![Main window](docs/images/editor.png)
+
+The main window keeps only what you use every day: status, profile, **Start mapping**. Profile
+details and app settings sit in collapsible sections (shown expanded
+[here](docs/images/settings.png)); **Help**, **Check for updates** and **About** are in the top right.
 
 ## Features
 
@@ -35,7 +39,9 @@ until 0.4.0; 0.4.1 moves your existing profiles and settings over automatically.
   restart Steam by hand.
 - Face buttons, D-pad, shoulders, stick clicks, sticks and triggers; dead zone and
   polling-rate settings; profiles with import/export.
-- No network access, telemetry, background service or auto-updater.
+- No telemetry, background service or auto-updater. The only network access is **Check for
+  updates**, which asks GitHub for the latest release when you click it (or at startup, if you
+  turn that on). Updates are never downloaded or installed automatically.
 
 **PS prompts still depend on the game.** The game must support DualShock 4 natively or
 through Steam Input. Games that only draw Xbox artwork will keep showing it.

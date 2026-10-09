@@ -31,6 +31,9 @@ public sealed class AppSettings
     /// <summary>"auto", "zh-TW" or "en". Takes effect on the next launch.</summary>
     public string Language { get; set; } = "auto";
 
+    /// <summary>Check GitHub for a newer release when the app opens. Off by default: no network unless asked.</summary>
+    public bool CheckUpdatesOnStartup { get; set; }
+
     public string? LastProfileId { get; set; }
 }
 

@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:TSCC_WASD.App"
              ShutdownMode="OnMainWindowClose">
-    <Application.Resources>
-
-    </Application.Resources>
+    <!-- Each window merges Themes/Dark.xaml itself, so windows also render in tests without App. -->
+    <Application.Resources/>
 </Application>

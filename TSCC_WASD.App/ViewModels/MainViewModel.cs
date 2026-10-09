@@ -78,7 +78,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         }, () => !IsRunning && Profiles.Count > 0);
         InstallDepsCommand = Command(() =>
         {
-            Process.Start(new ProcessStartInfo("https://docs.nefarius.at/Downloads/") { UseShellExecute = true });
+            OpenUrl("https://docs.nefarius.at/Downloads/");
             StatusMessage = L.T("已開啟官方下載頁。ViGEmBus 為必要依賴；HidHide 強烈建議安裝（不需手動設定）。",
                 "Opened the official downloads. ViGEmBus is required; HidHide is strongly recommended (no setup needed).");
             return Task.CompletedTask;
@@ -90,6 +90,18 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             var window = new CalibrationWindow { Owner = Application.Current?.MainWindow };
             if (window.ShowDialog() == true)
                 StatusMessage = L.T("已儲存並套用你的搖桿校準。", "Your stick calibration was saved and applied.");
+            return Task.CompletedTask;
+        });
+        CheckUpdatesCommand = Command(() => CheckUpdatesAsync(quiet: false));
+        OpenHelpCommand = Command(() =>
+        {
+            OpenUrl(L.T($"https://github.com/{UpdateChecker.Repository}/blob/main/docs/README.zh-TW.md",
+                $"https://github.com/{UpdateChecker.Repository}#readme"));
+            return Task.CompletedTask;
+        });
+        AboutCommand = Command(() =>
+        {
+            new AboutWindow { Owner = Application.Current?.MainWindow }.ShowDialog();
             return Task.CompletedTask;
         });
         OpenProfilesCommand = Command(() =>
@@ -148,7 +160,12 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public bool IsRunning
     {
         get => _isRunning;
-        private set { if (SetField(ref _isRunning, value)) NotifyState(); }
+        private set
+        {
+            if (!SetField(ref _isRunning, value)) return;
+            RaisePropertyChanged(nameof(StatusTitle));
+            NotifyState();
+        }
     }
     public bool CanEdit => !IsRunning && !_busy && !_closing && !_loadFailed;
 
@@ -174,6 +191,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public bool MinimizeToTray { get => Settings.MinimizeToTray; set => SetSetting(() => Settings.MinimizeToTray = value); }
     public bool ManageSteam { get => Settings.ManageSteam; set => SetSetting(() => Settings.ManageSteam = value); }
     public bool LaunchSteamAfterAutoStart { get => Settings.LaunchSteamAfterAutoStart; set => SetSetting(() => Settings.LaunchSteamAfterAutoStart = value); }
+    public bool CheckUpdatesOnStartup { get => Settings.CheckUpdatesOnStartup; set => SetSetting(() => Settings.CheckUpdatesOnStartup = value); }
     public string Language
     {
         get => Settings.Language;
@@ -212,6 +230,40 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public ICommand InstallDepsCommand { get; }
     public ICommand OpenProfilesCommand { get; }
     public ICommand CalibrateCommand { get; }
+    public ICommand CheckUpdatesCommand { get; }
+    public ICommand OpenHelpCommand { get; }
+    public ICommand AboutCommand { get; }
+
+    public string VersionText => $"v{UpdateChecker.CurrentVersion.ToString(3)}";
+
+    /// <summary>Headline of the status card.</summary>
+    public string StatusTitle => IsRunning ? L.T("映射中", "Mapping") : L.T("已停止", "Stopped");
+
+    internal static void OpenUrl(string url) =>
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
+
+    /// <summary>Asks GitHub for the newest release. Quiet mode (startup check) only speaks up for an update.</summary>
+    public async Task CheckUpdatesAsync(bool quiet)
+    {
+        if (!quiet) StatusMessage = L.T("正在檢查更新…", "Checking for updates…");
+        UpdateInfo? latest;
+        try { latest = await UpdateChecker.GetLatestAsync(); }
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            if (!quiet) StatusMessage = L.T($"無法檢查更新：{ex.Message}", $"Could not check for updates: {ex.Message}");
+            return;
+        }
+        if (latest is null || !UpdateChecker.IsNewer(latest, UpdateChecker.CurrentVersion))
+        {
+            if (!quiet) StatusMessage = L.T($"已是最新版本（{VersionText}）。", $"You have the latest version ({VersionText}).");
+            return;
+        }
+        StatusMessage = L.T($"有新版本 {latest.Tag} 可下載。", $"{latest.Tag} is available.");
+        var answer = MessageBox.Show(
+            L.T($"有新版本 {latest.Tag}（目前 {VersionText}）。要開啟下載頁嗎？", $"{latest.Tag} is available (you have {VersionText}). Open the download page?"),
+            AppPaths.Name, MessageBoxButton.YesNo, MessageBoxImage.Information);
+        if (answer == MessageBoxResult.Yes) OpenUrl(latest.Url);
+    }
 
     private void Reload()
     {

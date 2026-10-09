@@ -70,8 +70,21 @@ public class DesktopTests
                     bitmap.Render(surface);
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                    using var stream = File.Create(Path.Combine(screenshotDir, "editor.png"));
-                    encoder.Save(stream);
+                    using (var stream = File.Create(Path.Combine(screenshotDir, "editor.png"))) encoder.Save(stream);
+
+                    // Second shot with every section expanded, to review all controls.
+                    foreach (var expander in FindAll<System.Windows.Controls.Expander>(surface)) expander.IsExpanded = true;
+                    var scroller = FindAll<System.Windows.Controls.ScrollViewer>(surface).First();
+                    scroller.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
+                    surface.Measure(new Size(980, 1600));
+                    surface.Arrange(new Rect(0, 0, 980, 1600));
+                    surface.UpdateLayout();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                    var expanded = new RenderTargetBitmap(980, 1600, 96, 96, PixelFormats.Pbgra32);
+                    expanded.Render(surface);
+                    var expandedEncoder = new PngBitmapEncoder();
+                    expandedEncoder.Frames.Add(BitmapFrame.Create(expanded));
+                    using (var stream = File.Create(Path.Combine(screenshotDir, "editor-expanded.png"))) expandedEncoder.Save(stream);
                 }
                 Assert.Equal("", errors.ToString());
                 window.Close();
@@ -90,6 +103,16 @@ public class DesktopTests
         thread.Start();
         // Generous: a cold GitHub runner once needed over 20 s for the first WPF render.
         await completion.Task.WaitAsync(TimeSpan.FromSeconds(60));
+    }
+
+    private static IEnumerable<T> FindAll<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T match) yield return match;
+            foreach (var nested in FindAll<T>(child)) yield return nested;
+        }
     }
 
     [Fact]

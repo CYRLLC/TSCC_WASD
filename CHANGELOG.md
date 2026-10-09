@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 — preview
+
+- Redesigned window: one dark theme for every control (no light text boxes, drop-downs, lists or
+  scroll bars), a status card with the profile and Start/Stop up front, and collapsible
+  "Profile and controller" and "App settings" sections.
+- **Help**, **Check for updates** and **About** in the header. Update checks ask GitHub for the
+  newest release (including previews) only when clicked, or at startup if enabled (off by default).
+- The calibration wizard uses the same theme.
+
 ## 0.4.1 — preview
 
 - Renamed from YnyrWASD to **TSCC_WASD** (Triangle, Square, Cross, Circle). The program is now

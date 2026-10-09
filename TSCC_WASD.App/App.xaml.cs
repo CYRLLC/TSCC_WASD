@@ -58,6 +58,7 @@ public partial class App : Application
         else
             window.Show();
         _ = viewModel.AutoStartAsync(atSignIn);
+        if (viewModel.CheckUpdatesOnStartup) _ = viewModel.CheckUpdatesAsync(quiet: true);
     }
 
     protected override void OnExit(ExitEventArgs e)

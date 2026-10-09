@@ -4,29 +4,13 @@
         xmlns:app="clr-namespace:TSCC_WASD.App"
         Title="{app:T Zh='校準 NS2 Pro 搖桿', En='Calibrate NS2 Pro sticks'}"
         Icon="Assets/TSCC_WASD.ico" Width="560" SizeToContent="Height" ResizeMode="NoResize"
-        WindowStartupLocation="CenterOwner" Background="#101827" Foreground="#EDF3FF" FontFamily="Segoe UI">
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource BackgroundBrush}" Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI">
     <Window.Resources>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="14,8"/>
-            <Setter Property="Margin" Value="8,0,0,0"/>
-            <Setter Property="Background" Value="#DDE9FC"/>
-            <Setter Property="Foreground" Value="#10203A"/>
-        </Style>
-        <Style TargetType="TextBlock">
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-        <Style TargetType="ProgressBar">
-            <Setter Property="Height" Value="10"/>
-            <Setter Property="Maximum" Value="1"/>
-            <Setter Property="Margin" Value="0,2,0,6"/>
-            <Setter Property="Foreground" Value="#4678FF"/>
-            <Setter Property="Background" Value="#19263B"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
+        <ResourceDictionary Source="Themes/Dark.xaml"/>
     </Window.Resources>
     <StackPanel Margin="24">
         <TextBlock x:Name="StepTitle" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-        <TextBlock x:Name="StepText" Foreground="#9FB8DD" Margin="0,0,0,16"/>
+        <TextBlock x:Name="StepText" Style="{StaticResource Muted}" FontSize="13" Margin="0,0,0,16"/>
         <Grid x:Name="RangePanel" Visibility="Collapsed" Margin="0,0,0,8">
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions>
             <StackPanel>
@@ -44,11 +28,16 @@
                 <TextBlock Text="{app:T Zh=下, En=Down}" FontSize="12"/><ProgressBar x:Name="R3"/>
             </StackPanel>
         </Grid>
-        <TextBlock x:Name="RawText" Foreground="#9FB8DD" FontSize="12" Margin="0,0,0,16"/>
+        <TextBlock x:Name="RawText" Style="{StaticResource Muted}" Margin="0,0,0,16"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <StackPanel.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                    <Setter Property="Margin" Value="0,0,8,0"/>
+                </Style>
+            </StackPanel.Resources>
             <Button x:Name="ResetButton" Content="{app:T Zh=清除我的校準, En='Clear my calibration'}" Click="OnReset"/>
             <Button Content="{app:T Zh=取消, En=Cancel}" IsCancel="True" Click="OnCancel"/>
-            <Button x:Name="NextButton" FontWeight="Bold" IsDefault="True" Click="OnNext"/>
+            <Button x:Name="NextButton" Style="{StaticResource PrimaryButton}" Margin="0" IsDefault="True" Click="OnNext"/>
         </StackPanel>
     </StackPanel>
 </Window>
