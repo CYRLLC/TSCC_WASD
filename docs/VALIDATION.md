@@ -67,7 +67,7 @@ Steam remained running at the user's request. Shared HID mode received valid
 64-byte report 0x05 packets from the attached NS2 Pro and ran for 30 seconds,
 sampling 1,916 valid states while submitting them to a temporary virtual DS4.
 No button presses were observed during that automated capture. In a subsequent
-manual test on 2026-09-08, the user confirmed live input in YnyrWASD and successful
+manual test on 2026-09-08, the user confirmed live input in TSCC_WASD and successful
 input through the virtual PS4 in Steam's device test. **The basic NS2 Pro USB →
 shared HID → virtual DS4 path is user-confirmed working.** This does not certify
 every button, full stick travel or in-game compatibility.
@@ -81,7 +81,7 @@ Tested the running app's packaged 0.2.0 DLLs, with the WPF mapping stopped.
 HidHide was initially running with cloaking OFF, no hidden devices, and only its
 CLI allowlisted. DS4Windows was also running; its log showed controller search,
 but no evidence of an additional mapping was observed during these tests.
-The saved YnyrWASD profile used XInput (`inputType: 0`), not NS2 Pro USB.
+The saved TSCC_WASD profile used XInput (`inputType: 0`), not NS2 Pro USB.
 
 | Configuration | Duration | Fresh-state polls | Missing polls after first input |
 | --- | --- | --- | --- |

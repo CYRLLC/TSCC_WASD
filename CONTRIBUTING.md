@@ -5,7 +5,7 @@ Keep changes focused and describe observable behavior and validation.
 
 1. Fork and clone the repository; create a topic branch.
 2. Install the Windows/.NET prerequisites in README.
-3. Run locked restore, Release build and `dotnet test YnyrWASD.sln -c Release`.
+3. Run locked restore, Release build and `dotnet test TSCC_WASD.sln -c Release`.
 4. Add regression coverage for lifecycle, mapping or persistence changes.
    Driver-free fakes belong in tests; hardware checks go in `docs/VALIDATION.md`.
 5. Update documentation and CHANGELOG for user-visible changes. User-facing text is

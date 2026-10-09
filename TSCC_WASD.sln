@@ -1,0 +1,34 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TSCC_WASD.App", "TSCC_WASD.App\TSCC_WASD.App.csproj", "{F2E17D05-547A-4BF7-8172-EE0D8BFD546A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TSCC_WASD.Core", "TSCC_WASD.Core\TSCC_WASD.Core.csproj", "{6DB33036-477F-410F-9AF7-1E28CB2F7506}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TSCC_WASD.Tests", "TSCC_WASD.Tests\TSCC_WASD.Tests.csproj", "{FD618F6F-A557-42CA-9C21-EA499CAF8F12}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F2E17D05-547A-4BF7-8172-EE0D8BFD546A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2E17D05-547A-4BF7-8172-EE0D8BFD546A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2E17D05-547A-4BF7-8172-EE0D8BFD546A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2E17D05-547A-4BF7-8172-EE0D8BFD546A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DB33036-477F-410F-9AF7-1E28CB2F7506}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DB33036-477F-410F-9AF7-1E28CB2F7506}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DB33036-477F-410F-9AF7-1E28CB2F7506}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DB33036-477F-410F-9AF7-1E28CB2F7506}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD618F6F-A557-42CA-9C21-EA499CAF8F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD618F6F-A557-42CA-9C21-EA499CAF8F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD618F6F-A557-42CA-9C21-EA499CAF8F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD618F6F-A557-42CA-9C21-EA499CAF8F12}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

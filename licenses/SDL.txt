@@ -19,7 +19,7 @@ freely, subject to the following restrictions:
 
 Code and logic contributed by Valve Corporation under the SDL zlib license.
 
-YnyrWASD contains an altered C# adaptation of the Switch 2 USB initialization
+TSCC_WASD contains an altered C# adaptation of the Switch 2 USB initialization
 sequence, the HD rumble output encoding, and the input/IMU report and calibration
 layout from SDL's SDL_hidapi_switch2.c. It is not an official SDL component.
 Affected files: Switch2Protocol.cs, Switch2ReportParser.cs (including Switch2Rumble),

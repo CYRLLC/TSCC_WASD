@@ -22,7 +22,7 @@ Steam 若占用 USB 控制介面，程式會讀取 Steam 已初始化的 HID 報
    再把兩支搖桿沿邊緣轉圈推到底，八個方向的進度條滿了就能儲存。不論 Steam 開不開都使用這份校準，
    也不會被原廠校準覆蓋；精靈裡可以「清除我的校準」。
 1. **已記住的原廠校準**：只要曾在 Steam 關閉時開過一次映射，校準就會存在
-   `%APPDATA%\YnyrWASD\ns2-calibration.json`，之後 Steam 開著也會沿用。**建議做一次。**
+   `%APPDATA%\TSCC_WASD\ns2-calibration.json`，之後 Steam 開著也會沿用。**建議做一次。**
 2. **自動學習搖桿行程**：從保守範圍開始，搖桿推得更遠就自動放寬；每個方向推到底一次後，
    推到底就是 100% 輸出。
 
@@ -57,10 +57,10 @@ USB 控制介面可用時，程式會讀取原廠與使用者搖桿校準，設�
 ## Development smoke check
 
 ```powershell
-dotnet build YnyrWASD.sln -c Release
+dotnet build TSCC_WASD.sln -c Release
 pwsh -File scripts/smoke-ns2.ps1 -Seconds 15
 # Optional: also submit the sampled state to a temporary virtual DS4
-pwsh -File scripts/smoke-ns2.ps1 -AppDirectory YnyrWASD.App/bin/Release/net8.0-windows -Seconds 15 -MapToDs4
+pwsh -File scripts/smoke-ns2.ps1 -AppDirectory TSCC_WASD.App/bin/Release/net8.0-windows -Seconds 15 -MapToDs4
 ```
 
 The script reports observed buttons and left-stick X range, then disposes all handles.

@@ -36,5 +36,5 @@ jobs:
           $match = [regex]::Match($changelog, "(?ms)^## $([regex]::Escape($version))\b.*?(?=^## |\z)")
           if (-not $match.Success) { throw "CHANGELOG.md has no section for $version" }
           $match.Value.Trim() | Set-Content -LiteralPath release-notes.md -Encoding utf8
-          gh release create $env:GITHUB_REF_NAME @files --verify-tag --draft --prerelease --title "YnyrWASD $env:GITHUB_REF_NAME preview" --notes-file release-notes.md
+          gh release create $env:GITHUB_REF_NAME @files --verify-tag --draft --prerelease --title "TSCC_WASD $env:GITHUB_REF_NAME preview" --notes-file release-notes.md
           if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed.' }

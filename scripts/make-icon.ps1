@@ -1,10 +1,10 @@
-# Regenerates YnyrWASD.App/Assets/YnyrWASD.ico: a rounded blue tile with four face buttons.
+# Regenerates TSCC_WASD.App/Assets/TSCC_WASD.ico: a rounded blue tile with four face buttons.
 # Run with Windows PowerShell or pwsh on Windows (uses System.Drawing).
 [CmdletBinding()]
 param([string] $OutFile)
 $ErrorActionPreference = 'Stop'
 # Windows PowerShell 5.1 leaves $PSScriptRoot empty inside param() defaults.
-if (-not $OutFile) { $OutFile = Join-Path $PSScriptRoot '../YnyrWASD.App/Assets/YnyrWASD.ico' }
+if (-not $OutFile) { $OutFile = Join-Path $PSScriptRoot '../TSCC_WASD.App/Assets/TSCC_WASD.ico' }
 Add-Type -AssemblyName System.Drawing
 
 function New-IconPng([int] $size) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1 — preview
+
+- Renamed from YnyrWASD to **TSCC_WASD** (Triangle, Square, Cross, Circle). The program is now
+  `TSCC_WASD.exe`.
+- Existing data in `%APPDATA%\YnyrWASD` moves to `%APPDATA%\TSCC_WASD` on first launch, the
+  "start with Windows" entry is re-registered under the new name, and an old YnyrWASD that is
+  still running is detected so the two never map at the same time.
+
 ## 0.4.0 — preview
 
 - Fixed NS2 Pro sticks topping out at about 60% while Steam is running (full push behaved like a

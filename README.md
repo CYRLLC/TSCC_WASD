@@ -1,11 +1,15 @@
-# YnyrWASD
+# TSCC_WASD
 
 **A free, open-source Windows tool that makes games see your Xbox or Nintendo Switch 2 Pro
 controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.4.0 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.4.1 preview.** English and Traditional Chinese UI.
+
+**The name:** TSCC stands for **T**riangle, **S**quare, **C**ross and **C**ircle, the four
+PlayStation face buttons this tool makes your games show. The project was called *YnyrWASD*
+until 0.4.0; 0.4.1 moves your existing profiles and settings over automatically.
 
 中文使用說明：[繁體中文](docs/README.zh-TW.md)
 
@@ -49,21 +53,21 @@ are not mapped. See the [roadmap](PLAN.md).
    [Microsoft](https://dotnet.microsoft.com/download/dotnet/10.0).
 3. Install **ViGEmBus** (required) and **HidHide** (strongly recommended) from the
    [official Nefarius downloads](https://docs.nefarius.at/Downloads/), then reboot if asked.
-   You do not need to configure HidHide; YnyrWASD does that while it maps.
+   You do not need to configure HidHide; TSCC_WASD does that while it maps.
 4. Download a release ZIP from [Releases](https://github.com/CYRLLC/TSCC_WASD/releases)
-   (or build it, see below), extract it and run `YnyrWASD.App.exe`. Preview builds are not
+   (or build it, see below), extract it and run `TSCC_WASD.exe`. Preview builds are not
    code-signed yet, so SmartScreen may warn; compare the ZIP with its `.sha256` file first
    ([details](docs/SIGNING.md)).
 5. Keep **Input = Auto-detect** and **Hide physical controllers while mapping** checked,
    then click **Start mapping**.
-6. If YnyrWASD says Steam was already running, choose **Yes** to restart Steam.
+6. If TSCC_WASD says Steam was already running, choose **Yes** to restart Steam.
 7. **Then** launch the game.
 
 ### Recommended: start with Windows
 
 Under **App settings**, turn on **Start with Windows and begin mapping** and
 **Launch Steam after an automatic start**, then turn off Steam's own *Run Steam when my
-computer starts*. At sign-in YnyrWASD hides the controllers, starts mapping in the
+computer starts*. At sign-in TSCC_WASD hides the controllers, starts mapping in the
 notification area and only then starts Steam, so Steam never sees the real controller.
 If Steam still starts first, **restart Steam if it started first** handles it.
 
@@ -75,27 +79,27 @@ from a program that already has it open. Two situations follow from that:
 - **The game was already running.** Restart the game after mapping has started.
 - **Steam was already running.** Steam Input keeps forwarding the real controller to Steam
   games, so prompts alternate between Xbox and PS. Restart Steam once mapping is running;
-  YnyrWASD offers to do this for you. Keep the game's Steam Input setting on *default/enabled*.
+  TSCC_WASD offers to do this for you. Keep the game's Steam Input setting on *default/enabled*.
   Games such as *Yakuza 0 Director's Cut* get their PS prompts from Steam Input; with
   Steam Input disabled they fall back to Xbox prompts.
 
-After you stop mapping, the controller is visible again. Closing YnyrWASD never closes
-Steam. If Steam started while the controllers were hidden, YnyrWASD asks on stop or exit
+After you stop mapping, the controller is visible again. Closing TSCC_WASD never closes
+Steam. If Steam started while the controllers were hidden, TSCC_WASD asks on stop or exit
 whether to restart Steam once more so Steam sees the real controller again.
 
 ## How it works
 
 ```
 NS2 Pro (USB HID) ─┐
-                   ├─► YnyrWASD (allowlisted in HidHide) ─► ViGEmBus virtual DS4 ─► game / Steam
+                   ├─► TSCC_WASD (allowlisted in HidHide) ─► ViGEmBus virtual DS4 ─► game / Steam
 Xbox (XInput)   ───┘
         ▲
         └── hidden from every other process by HidHide while mapping
 ```
 
-On start, YnyrWASD:
+On start, TSCC_WASD:
 
-1. records your current HidHide state in `%APPDATA%\YnyrWASD\hidhide-restore.json`;
+1. records your current HidHide state in `%APPDATA%\TSCC_WASD\hidhide-restore.json`;
 2. adds itself to HidHide's application list;
 3. hides NS2 Pro and Xbox controllers: Bluetooth/HID ones and wired ones (XUSB/GIP device
    classes, which HidHide also filters). Virtual pads created by ViGEm, such as DS4Windows'
@@ -103,7 +107,7 @@ On start, YnyrWASD:
 4. turns cloaking on.
 
 Every 5 seconds it also hides any newly connected controller. On stop it undoes only what
-it changed. If the app is killed, the next launch restores your settings. YnyrWASD leaves
+it changed. If the app is killed, the next launch restores your settings. TSCC_WASD leaves
 HidHide alone when HidHide is in inverse-list mode.
 
 Bluetooth Xbox and NS2 Pro hiding is verified on hardware; wired Xbox hiding is
@@ -116,13 +120,13 @@ motion data that the simple ViGEm API cannot.
 ## NS2 Pro notes
 
 Supports the Switch 2 Pro Controller (`057E:2069`) over USB. When Steam owns the control
-interface, YnyrWASD reads Steam-initialized HID reports and uses nominal calibration.
+interface, TSCC_WASD reads Steam-initialized HID reports and uses nominal calibration.
 Otherwise it initializes the controller and reads its calibration itself.
 Button layout follows physical position: B→Cross, A→Circle, Y→Square, X→Triangle;
 Home→PS, Capture→touchpad click. Gyro/accelerometer and HD rumble are supported.
 While Steam holds the controller its factory stick calibration can't be read; use
 **Calibrate NS2 Pro sticks** (release, then circle both sticks at the edge) for exact
-full-push and resting values. Without it YnyrWASD uses a remembered factory calibration or
+full-push and resting values. Without it TSCC_WASD uses a remembered factory calibration or
 learns the stick travel automatically.
 See [NS2 Pro details](docs/NS2-PRO.md).
 
@@ -131,10 +135,10 @@ See [NS2 Pro details](docs/NS2-PRO.md).
 Use Windows and the .NET 10 SDK (10.0.100 or newer, per `global.json`).
 
 ```powershell
-dotnet restore YnyrWASD.sln --locked-mode
-dotnet build YnyrWASD.sln -c Release --no-restore -warnaserror
-dotnet test YnyrWASD.sln -c Release --no-build
-dotnet run --project YnyrWASD.App
+dotnet restore TSCC_WASD.sln --locked-mode
+dotnet build TSCC_WASD.sln -c Release --no-restore -warnaserror
+dotnet test TSCC_WASD.sln -c Release --no-build
+dotnet run --project TSCC_WASD.App
 pwsh -File scripts/package.ps1
 ```
 
@@ -146,7 +150,7 @@ not prove compatibility with every controller or game. See [validation](docs/VAL
 
 ## Configuration and troubleshooting
 
-Profiles live in `%APPDATA%\YnyrWASD\profiles.json`; the previous version is kept as
+Profiles live in `%APPDATA%\TSCC_WASD\profiles.json`; the previous version is kept as
 `profiles.json.bak`. App settings live in `settings.json` in the same folder. **Start with
 Windows** writes a per-user `HKCU\...\Run` entry; turning it off removes it. See [profile format](docs/PROFILES.md) and
 [troubleshooting](docs/TROUBLESHOOTING.md).
@@ -156,7 +160,7 @@ Windows** writes a per-user `HKCU\...\Run` entry; turning it off removes it. See
 We know of no maintained open-source tool aimed at Xbox / NS2 Pro → virtual DS4 with
 automatic hiding. These projects overlap in part:
 
-| Project | What it does | Difference from YnyrWASD |
+| Project | What it does | Difference from TSCC_WASD |
 | --- | --- | --- |
 | [DS4Windows](https://github.com/schmaldeo/DS4Windows) (archived fork; original repo removed) | PS / Switch controllers → virtual Xbox or DS4 | Does not take Xbox controllers as input |
 | [BetterJoy](https://github.com/Davidobot/BetterJoy) | Original Switch Pro / Joy-Con → virtual Xbox or DS4 | No Xbox or NS2 Pro input |
@@ -167,17 +171,17 @@ automatic hiding. These projects overlap in part:
 | [Steam Input](https://partner.steamgames.com/doc/features/steam_controller) | Remaps controllers inside Steam games | Cannot make an Xbox controller show PS prompts |
 
 [HidHide](https://github.com/nefarius/HidHide) and [ViGEmBus](https://github.com/nefarius/ViGEmBus)
-are the building blocks YnyrWASD relies on.
+are the building blocks TSCC_WASD relies on.
 
 ## Contributing and license
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
 [release checklist](docs/RELEASING.md) and [roadmap](PLAN.md).
 
-YnyrWASD is licensed under the [MIT License](LICENSE). The NS2 Pro protocol portions
+TSCC_WASD is licensed under the [MIT License](LICENSE). The NS2 Pro protocol portions
 adapted from SDL keep their zlib license. Bundled and external components are listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 PlayStation, DualShock, Xbox, Nintendo Switch, Steam and reWASD are trademarks of their
-respective owners. YnyrWASD is an independent project and is not affiliated with or
+respective owners. TSCC_WASD is an independent project and is not affiliated with or
 endorsed by them.

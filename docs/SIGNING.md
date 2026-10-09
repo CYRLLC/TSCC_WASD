@@ -6,10 +6,10 @@
 Windows SmartScreen 可能顯示「Windows 已保護您的電腦」。按「其他資訊 → 仍要執行」即可。
 下載量累積一段時間後，警告通常會減少，但不保證消失。
 
-目前 YnyrWASD 的預覽版**都沒有簽章**。執行前請先比對 ZIP 的 SHA-256 與 Release 附的 `.sha256` 檔：
+目前 TSCC_WASD 的預覽版**都沒有簽章**。執行前請先比對 ZIP 的 SHA-256 與 Release 附的 `.sha256` 檔：
 
 ```powershell
-Get-FileHash .\YnyrWASD-0.4.0-win-x64.zip -Algorithm SHA256
+Get-FileHash .\TSCC_WASD-0.4.1-win-x64.zip -Algorithm SHA256
 ```
 
 ## 方案比較
@@ -43,7 +43,7 @@ SignPath Foundation 用**基金會名下的憑證**免費幫開源專案簽章�
 2. 到 https://signpath.org/apply 申請。說明本程式會呼叫 ViGEmBus 與 HidHide，但本身不安裝驅動。
 3. 通過後，在 SignPath 建立：
    - 連到 `CYRLLC/TSCC_WASD` 的 GitHub 受信任建置系統；
-   - 一個簽 ZIP 內 `YnyrWASD.App.exe`、`YnyrWASD.App.dll`、`YnyrWASD.Core.dll` 的成品設定；
+   - 一個簽 ZIP 內 `TSCC_WASD.exe`、`TSCC_WASD.dll`、`TSCC_WASD.Core.dll` 的成品設定；
    - 名為 `release-signing` 的簽章政策。
 4. 在 GitHub 專案的 Actions secrets 加入 `SIGNPATH_API_TOKEN` 與 `SIGNPATH_ORGANIZATION_ID`。
 5. 在 `.github/workflows/release.yml` 的「Build, test and package」與「Create draft preview」之間，

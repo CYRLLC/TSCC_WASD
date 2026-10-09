@@ -1,6 +1,6 @@
 # Third-party notices
 
-YnyrWASD original source is MIT licensed. Dependencies and adapted source retain their own licenses.
+TSCC_WASD original source is MIT licensed. Dependencies and adapted source retain their own licenses.
 
 ## SDL Switch 2 protocol reference and adaptation
 
@@ -46,10 +46,10 @@ SOFTWARE.
 - ViGEmBus driver is separately distributed under BSD-3-Clause:
   https://github.com/nefarius/ViGEmBus/blob/master/LICENSE.
 - HidHide (MIT, https://github.com/nefarius/HidHide) is optional, installed separately
-  and not redistributed. While mapping, YnyrWASD runs the user's installed `HidHideCLI.exe`
+  and not redistributed. While mapping, TSCC_WASD runs the user's installed `HidHideCLI.exe`
   as a separate process to change and later restore its configuration; no HidHide code
-  or binary is included in YnyrWASD.
-- Steam is not bundled or linked. YnyrWASD only starts the user's installed `steam.exe`
+  or binary is included in TSCC_WASD.
+- Steam is not bundled or linked. TSCC_WASD only starts the user's installed `steam.exe`
   (with `-shutdown`, then normally) when the user asks it to restart Steam.
 
 ## Development-only packages
@@ -60,4 +60,4 @@ upstream repositories for notices. Each project's packages.lock.json records
 versions and integrity hashes.
 
 PlayStation, DualShock, Xbox, Nintendo Switch, Steam and reWASD names belong to their respective owners.
-YnyrWASD is an independent project and does not imply endorsement.
+TSCC_WASD is an independent project and does not imply endorsement.

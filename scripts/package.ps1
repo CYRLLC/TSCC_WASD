@@ -18,13 +18,13 @@ try {
     if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part version.' }
     $artifactRoot = Join-Path $repoRoot 'artifacts'
     $stage = Join-Path $artifactRoot ('stage-' + [guid]::NewGuid().ToString('N'))
-    $packageName = "YnyrWASD-$version-win-x64"
+    $packageName = "TSCC_WASD-$version-win-x64"
     $packageDir = Join-Path $stage $packageName
     New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-    Invoke-DotNet @('restore', 'YnyrWASD.sln', '--locked-mode', '-p:NuGetAuditMode=all', '-warnaserror')
-    Invoke-DotNet @('build', 'YnyrWASD.sln', '-c', 'Release', '--no-restore', '-warnaserror')
-    Invoke-DotNet @('test', 'YnyrWASD.sln', '-c', 'Release', '--no-build', '--logger', 'trx')
-    Invoke-DotNet @('publish', 'YnyrWASD.App/YnyrWASD.App.csproj', '-c', 'Release',
+    Invoke-DotNet @('restore', 'TSCC_WASD.sln', '--locked-mode', '-p:NuGetAuditMode=all', '-warnaserror')
+    Invoke-DotNet @('build', 'TSCC_WASD.sln', '-c', 'Release', '--no-restore', '-warnaserror')
+    Invoke-DotNet @('test', 'TSCC_WASD.sln', '-c', 'Release', '--no-build', '--logger', 'trx')
+    Invoke-DotNet @('publish', 'TSCC_WASD.App/TSCC_WASD.App.csproj', '-c', 'Release',
         '--no-restore', '--self-contained', 'false', '-p:PlatformTarget=x64',
         '-p:DebugType=None', '-p:DebugSymbols=false', '-o', $packageDir)
     foreach ($name in @('README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CHANGELOG.md',
@@ -34,8 +34,8 @@ try {
     Copy-Item -LiteralPath (Join-Path $repoRoot 'docs') -Destination $packageDir -Recurse
     Copy-Item -LiteralPath (Join-Path $repoRoot 'examples') -Destination $packageDir -Recurse
     Copy-Item -LiteralPath (Join-Path $repoRoot 'licenses') -Destination $packageDir -Recurse
-    foreach ($required in @('YnyrWASD.App.exe', 'YnyrWASD.App.dll',
-        'YnyrWASD.App.runtimeconfig.json', 'Nefarius.ViGEm.Client.dll', 'LICENSE')) {
+    foreach ($required in @('TSCC_WASD.exe', 'TSCC_WASD.dll',
+        'TSCC_WASD.runtimeconfig.json', 'Nefarius.ViGEm.Client.dll', 'LICENSE')) {
         if (-not (Test-Path -LiteralPath (Join-Path $packageDir $required))) {
             throw "Missing package file: $required"
         }

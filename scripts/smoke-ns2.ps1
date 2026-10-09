@@ -1,14 +1,14 @@
 #requires -Version 7.4
 [CmdletBinding()]
 param(
-    [string] $AppDirectory = (Join-Path $PSScriptRoot '../YnyrWASD.Core/bin/Release/net10.0-windows'),
+    [string] $AppDirectory = (Join-Path $PSScriptRoot '../TSCC_WASD.Core/bin/Release/net10.0-windows'),
     [ValidateRange(1,60)][int] $Seconds = 15,
     [switch] $MapToDs4
 )
 $ErrorActionPreference = 'Stop'
 $resolved = (Resolve-Path -LiteralPath $AppDirectory).Path
-Add-Type -Path (Join-Path $resolved 'YnyrWASD.Core.dll')
-$reader = [YnyrWASD.Core.Services.Input.Switch2InputReader]::new()
+Add-Type -Path (Join-Path $resolved 'TSCC_WASD.Core.dll')
+$reader = [TSCC_WASD.Core.Services.Input.Switch2InputReader]::new()
 $pad = $null
 $timer = [Diagnostics.Stopwatch]::StartNew()
 $reports = 0
@@ -24,13 +24,13 @@ $leftMin = 32767; $leftMax = -32768
 try {
     if ($MapToDs4) {
         Add-Type -Path (Join-Path $resolved 'Nefarius.ViGEm.Client.dll')
-        $pad = [YnyrWASD.Core.Services.VirtualControllers.DualShock4VirtualPad]::new()
+        $pad = [TSCC_WASD.Core.Services.VirtualControllers.DualShock4VirtualPad]::new()
         $connectionError = ''
         if (-not $pad.TryConnect([ref]$connectionError)) { throw $connectionError }
     }
     while ($timer.Elapsed.TotalSeconds -lt $Seconds) {
         $polls++
-        $state = [YnyrWASD.Core.Services.Input.State]::new()
+        $state = [TSCC_WASD.Core.Services.Input.State]::new()
         $status = $reader.Status
         if ($status -ne $lastStatus) { Write-Host $status; $lastStatus = $status }
         if ($reader.TryGetState([ref] $state)) {
