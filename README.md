@@ -121,12 +121,21 @@ Profiles live in `%APPDATA%\YnyrWASD\profiles.json`. The previous version is kep
 
 ## Similar projects
 
-- [DS4Windows](https://github.com/Ryochan7/DS4Windows) works the other way: it makes
-  PlayStation controllers look like Xbox.
-- [Steam Input](https://partner.steamgames.com/doc/features/steam_controller) can remap
-  controllers for Steam games only.
-- [HidHide](https://github.com/nefarius/HidHide) and [ViGEmBus](https://github.com/nefarius/ViGEmBus)
-  are the building blocks YnyrWASD relies on.
+We know of no maintained open-source tool aimed at Xbox / NS2 Pro → virtual DS4 with
+automatic hiding. These projects overlap in part:
+
+| Project | What it does | Difference from YnyrWASD |
+| --- | --- | --- |
+| [DS4Windows](https://github.com/schmaldeo/DS4Windows) (archived fork; original repo removed) | PS / Switch controllers → virtual Xbox or DS4 | Does not take Xbox controllers as input |
+| [BetterJoy](https://github.com/Davidobot/BetterJoy) | Original Switch Pro / Joy-Con → virtual Xbox or DS4 | No Xbox or NS2 Pro input |
+| [JoyShockMapper](https://github.com/Electronicks/JoyShockMapper) | PS / Switch controllers → keyboard, mouse or virtual pad, gyro-focused | No Xbox input; text-config driven |
+| [Handheld Companion](https://github.com/Valkirie/HandheldCompanion) | Handheld PCs' built-in controls → virtual Xbox / DS4, also uses HidHide | Built for handhelds |
+| [x360ce](https://github.com/x360ce/x360ce), [XOutput](https://github.com/csutorasa/XOutput) (archived) | DirectInput controllers → virtual Xbox | Opposite direction |
+| [AntiMicroX](https://github.com/AntiMicroX/antimicrox) | Controller → keyboard and mouse | Covers a different reWASD feature |
+| [Steam Input](https://partner.steamgames.com/doc/features/steam_controller) | Remaps controllers inside Steam games | Cannot make an Xbox controller show PS prompts |
+
+[HidHide](https://github.com/nefarius/HidHide) and [ViGEmBus](https://github.com/nefarius/ViGEmBus)
+are the building blocks YnyrWASD relies on.
 
 ## Contributing and license
 
