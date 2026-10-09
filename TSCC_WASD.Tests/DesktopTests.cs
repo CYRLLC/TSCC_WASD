@@ -88,7 +88,8 @@ public class DesktopTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        // Generous: a cold GitHub runner once needed over 20 s for the first WPF render.
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(60));
     }
 
     [Fact]
@@ -135,6 +136,7 @@ public class DesktopTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        // Generous: a cold GitHub runner once needed over 20 s for the first WPF render.
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(60));
     }
 }
