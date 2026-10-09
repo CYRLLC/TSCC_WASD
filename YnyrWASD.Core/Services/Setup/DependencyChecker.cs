@@ -26,8 +26,8 @@ public static class DependencyChecker
 
     public static string BuildStatusText()
     {
-        var vigem = IsViGEmInstalled() ? "已安裝" : "未安裝";
-        var hidhide = IsHidHideInstalled() ? "已安裝" : "未安裝";
+        var vigem = IsViGEmInstalled() ? L.T("已安裝", "installed") : L.T("未安裝", "not installed");
+        var hidhide = IsHidHideInstalled() ? L.T("已安裝", "installed") : L.T("未安裝", "not installed");
         return $"ViGEmBus: {vigem} · HidHide: {hidhide}";
     }
 }

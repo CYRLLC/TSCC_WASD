@@ -30,6 +30,22 @@ button input, HidHide setup, game recognition or long-running stability.
 
 ## Manual hardware validation
 
+### 0.4.0 — 2026-10-09
+
+Same machine: Windows 11 26100, .NET 10.0.401 SDK, NS2 Pro on USB (Steam running, shared HID).
+
+| Check | Result |
+| --- | --- |
+| Build/test/package on .NET 10 (`scripts/package.ps1`, warnings as errors) | Passed, 93 tests |
+| Virtual DS4 raw report read back through its HID interface: Cross, PS + touchpad bits, gyro, accel, touch "lifted" flags | Passed (exact values) |
+| ViGEm DS4 output report layout for rumble (`[1]` flags, `[4]` small, `[5]` large) | Passed, probed with a HID write |
+| NS2 Pro IMU in shared mode: 476/476 samples, gyro ≈ 0 at rest, accel magnitude ≈ 1 g in DS4 units | Passed |
+| NS2 Pro rumble packet written | Sent; felt-vibration confirmation pending |
+| Xbox Guide via XInputGetStateEx, Xbox rumble | Pending (controller was off) |
+| Wired Xbox hiding | Pending (no wired controller); enumeration finds no false positives |
+| Start with Windows / tray / automatic Steam handling on a real sign-in | Pending |
+| Gyro direction in a motion-aware game | Pending |
+
 ### Auto-detect + automatic HidHide — 0.3.0, 2026-10-09
 
 Windows 11 26100, HidHide 1.2.98, Steam and DS4Windows running, Bluetooth Xbox

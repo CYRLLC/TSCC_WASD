@@ -7,7 +7,7 @@ the VID/PID filter, so the mapper does not feed its own output back as input.
 
 ## 使用方式
 
-1. 接上 NS2 Pro 的 USB 線，開啟 **0.2.0** 或更新版本。
+1. 接上 NS2 Pro 的 USB 線，開啟 **0.4.0** 或更新版本。
 2. 新增或選擇設定檔，「輸入手把」維持 **自動偵測**（或指定只用 NS2 Pro）。
 3. 按「儲存全部」，再按「啟動映射」。
 4. 底部應顯示「映射運作中：NS2 Pro … → DualShock 4」。
@@ -36,10 +36,13 @@ USB 控制介面可用時，程式會讀取原廠與使用者搖桿校準，設�
 - 依實體位置：Nintendo **B → Cross、A → Circle、Y → Square、X → Triangle**。
 - `− / +` → Share / Options；L/R → L1/R1；搖桿按下 → L3/R3。
 - ZL/ZR 是數位開關，輸出為 0 或 255，不會變成真正的類比扳機。
-- Home、Capture、C、GL/GR、陀螺儀與震動尚未映射。
+- **Home → PS 鍵、Capture（截圖）→ 觸控板按下。**
+- **陀螺儀／加速度計 → DS4 體感**（0.4.0 起；已實機確認有資料、比例正確，遊戲內方向待驗證）。
+- **震動：** 遊戲送給虛擬 DS4 的震動會轉成 NS2 Pro 的 HD 震動（可在設定檔關閉）。
+- C 鍵與背面 GL/GR 尚未映射。
 - 即時診斷中的 A/B/X/Y 是中介 XInput 位置名稱；以本頁 PS 對應為準。
 - 超過 250ms 沒有有效資料，輸出歸零；讀取逾時或拔除後會嘗試重新連線。
-- Steam 仍可能同時看到 NS2 Pro 和虛擬 PS4；遊戲的裝置選擇與圖示需另外確認。
+- 映射時會自動用 HidHide 隱藏 NS2 Pro；Steam 若比映射早開，程式會提示重新啟動 Steam。
 
 ## Development smoke check
 

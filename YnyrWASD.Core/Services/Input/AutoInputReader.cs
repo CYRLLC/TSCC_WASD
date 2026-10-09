@@ -5,7 +5,7 @@ namespace YnyrWASD.Core.Services.Input;
 /// The active source only changes when it disconnects or the other one receives deliberate input,
 /// so an idle controller that still streams neutral reports never steals control.
 /// </summary>
-public sealed class AutoInputReader : IInputReader
+public sealed class AutoInputReader : IInputReader, IMotionSource, IRumbleTarget
 {
     private const int TriggerThreshold = 30;
     private const int StickThreshold = 12000;
@@ -13,6 +13,7 @@ public sealed class AutoInputReader : IInputReader
     private readonly string[] _names = ["NS2 Pro", "Xbox／XInput"];
     private volatile int _active = -1;
     private volatile string _lastError = "";
+    private volatile int _rumble; // large << 8 | small, replayed onto whichever source becomes active
     private bool _disposed;
 
     public AutoInputReader() : this(new Switch2InputReader(), new XInputReader()) { }
@@ -21,9 +22,9 @@ public sealed class AutoInputReader : IInputReader
 
     public string Status => _active switch
     {
-        0 => $"自動偵測 → {_sources[0].Status}",
-        1 => "自動偵測 → Xbox／XInput",
-        _ => $"自動偵測：尋找手把中（NS2 Pro：{_sources[0].Status}；XInput：未連線{_lastError}）"
+        0 => L.T($"自動偵測 → {_sources[0].Status}", $"Auto-detect → {_sources[0].Status}"),
+        1 => L.T("自動偵測 → Xbox／XInput", "Auto-detect → Xbox / XInput"),
+        _ => L.T($"自動偵測：尋找手把中（NS2 Pro：{_sources[0].Status}；XInput：未連線{_lastError}）", $"Auto-detect: looking for a controller (NS2 Pro: {_sources[0].Status}; XInput: not connected{_lastError})")
     };
 
     /// <summary>Name of the source currently being mapped, or null while none is available.</summary>
@@ -50,9 +51,37 @@ public sealed class AutoInputReader : IInputReader
             for (int i = 0; i < _sources.Length; i++)
                 if (i != active && available[i] && IsInUse(states[i])) { active = i; break; }
         }
+        if (active != _active) MoveRumble(_active, active);
         _active = active;
         state = active < 0 ? default : states[active];
         return active >= 0;
+    }
+
+    public bool TryGetMotion(out MotionSample motion)
+    {
+        motion = default;
+        int active = _active;
+        return active >= 0 && _sources[active] is IMotionSource source && source.TryGetMotion(out motion);
+    }
+
+    public void SetRumble(byte large, byte small)
+    {
+        _rumble = (large << 8) | small;
+        int active = _active;
+        if (active >= 0) Rumble(active, large, small);
+    }
+
+    private void MoveRumble(int from, int to)
+    {
+        if (from >= 0) Rumble(from, 0, 0);
+        int value = _rumble;
+        if (to >= 0 && value != 0) Rumble(to, (byte)(value >> 8), (byte)value);
+    }
+
+    private void Rumble(int index, byte large, byte small)
+    {
+        try { (_sources[index] as IRumbleTarget)?.SetRumble(large, small); }
+        catch { /* Rumble is best-effort. */ }
     }
 
     private bool SafeRead(IInputReader source, out State state)

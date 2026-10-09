@@ -36,8 +36,14 @@ public enum GamepadButtonFlags : ushort
     RightThumb = 0x0080,
     LeftShoulder = 0x0100,
     RightShoulder = 0x0200,
+    // XInputGetStateEx reports Guide here; Touchpad uses the otherwise unused bit for NS2 Capture.
+    Guide = 0x0400,
+    Touchpad = 0x0800,
     A = 0x1000,
     B = 0x2000,
     X = 0x4000,
     Y = 0x8000
 }
+
+/// <summary>Motion sample already scaled to DualShock 4 raw units (gyro 16 LSB per deg/s, accel 8192 LSB per g).</summary>
+public readonly record struct MotionSample(short GyroX, short GyroY, short GyroZ, short AccelX, short AccelY, short AccelZ);

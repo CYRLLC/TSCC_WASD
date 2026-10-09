@@ -27,4 +27,52 @@ internal static class WindowsDevicePaths
         }
         return [];
     }
+
+    // Device setup classes used by wired Xbox controllers (XUSB / GIP); HidHide filters both.
+    private const string XnaCompositeClass = "{d61ca365-5af4-4486-998b-9db4734c6ca3}";
+    private const string XboxCompositeClass = "{05f5cfe2-4733-4950-a6bb-07aad01a3a84}";
+    private const uint FilterClass = 0x200, LocatePhantom = 1;
+
+    [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Get_Device_ID_List_SizeW(out uint length, string filter, uint flags);
+    [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Get_Device_ID_ListW(string filter, [Out] char[] buffer, uint length, uint flags);
+    [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Locate_DevNodeW(out uint devInst, string deviceId, uint flags);
+    [DllImport("cfgmgr32.dll", ExactSpelling = true)]
+    private static extern uint CM_Get_Parent(out uint parent, uint devInst, uint flags);
+    [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Get_Device_IDW(uint devInst, [Out] char[] buffer, uint length, uint flags);
+
+    /// <summary>
+    /// Physical wired Microsoft controllers (present or remembered). Virtual pads created by ViGEm
+    /// (for example DS4Windows' Xbox 360 output) hang off a root-enumerated bus and are excluded.
+    /// </summary>
+    internal static string[] FindWiredXbox() =>
+        [.. ListClass(XnaCompositeClass).Concat(ListClass(XboxCompositeClass))
+            .Where(id => id.Contains("VID_045E", StringComparison.OrdinalIgnoreCase))
+            .Where(id => !(ParentOf(id)?.StartsWith(@"ROOT\", StringComparison.OrdinalIgnoreCase) ?? true))
+            .Distinct(StringComparer.OrdinalIgnoreCase)];
+
+    private static IEnumerable<string> ListClass(string classGuid)
+    {
+        for (int retry = 0; retry < 3; retry++)
+        {
+            if (CM_Get_Device_ID_List_SizeW(out uint length, classGuid, FilterClass) != 0) return [];
+            var buffer = new char[length];
+            uint result = CM_Get_Device_ID_ListW(classGuid, buffer, length, FilterClass);
+            if (result == 0) return new string(buffer).Split('\0', StringSplitOptions.RemoveEmptyEntries);
+            if (result != 0x1A) return [];
+        }
+        return [];
+    }
+
+    private static string? ParentOf(string deviceId)
+    {
+        if (CM_Locate_DevNodeW(out uint node, deviceId, LocatePhantom) != 0) return null;
+        if (CM_Get_Parent(out uint parent, node, 0) != 0) return null;
+        var buffer = new char[400];
+        return CM_Get_Device_IDW(parent, buffer, (uint)buffer.Length, 0) == 0
+            ? new string(buffer).TrimEnd('\0') : null;
+    }
 }

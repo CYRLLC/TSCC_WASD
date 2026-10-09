@@ -24,7 +24,7 @@ internal static class Switch2Protocol
             var calibrated = Switch2StickCalibration.Parse(userRight.AsSpan(2));
             if (calibrated.IsValid) right = calibrated;
         }
-        if (!left.IsValid || !right.IsValid) throw new IOException("NS2 Pro 搖桿校準資料無效。");
+        if (!left.IsValid || !right.IsValid) throw new IOException(L.T("NS2 Pro 搖桿校準資料無效。", "NS2 Pro stick calibration data is invalid."));
 
         byte[][] sequence =
         [

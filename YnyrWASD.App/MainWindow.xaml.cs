@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using YnyrWASD.App.ViewModels;
+using YnyrWASD.Core;
 
 namespace YnyrWASD.App;
 
@@ -18,6 +19,21 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _viewModel;
         Closing += OnClosing;
+        StateChanged += OnStateChanged;
+    }
+
+    /// <summary>Restores the window from the notification area (or brings it forward).</summary>
+    public void ShowFromTray()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        // Mapping keeps running; the tray icon brings the window back.
+        if (WindowState == WindowState.Minimized && _viewModel.MinimizeToTray) Hide();
     }
 
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -35,7 +51,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "清理控制器時發生錯誤");
+            MessageBox.Show(ex.Message, L.T("清理控制器時發生錯誤", "Error while cleaning up controllers"));
         }
         finally
         {

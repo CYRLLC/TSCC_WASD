@@ -19,9 +19,9 @@
    builds/tests and creates a **draft prerelease**, never a public stable release.
 6. Review assets, setup instructions and limitations in the draft before publishing.
 
-The ZIP is framework-dependent: it requires .NET 8 Windows Desktop Runtime x64.
+The ZIP is framework-dependent: it requires .NET 10 Windows Desktop Runtime x64.
 It contains no driver installer, runtime, private profile or signing certificate.
-The EXE is unsigned. Signing, a Store listing and public hosting are separate steps.
+The EXE is unsigned until code signing is set up; see [SIGNING.md](SIGNING.md).
 A source checkout can be archived with `git archive` after reviewing tracked files.
 
 ## Stable-release gate

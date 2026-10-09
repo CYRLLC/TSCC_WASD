@@ -4,8 +4,8 @@ YnyrWASD original source is MIT licensed. Dependencies and adapted source retain
 
 ## SDL Switch 2 protocol reference and adaptation
 
-The NS2 Pro USB command sequence is adapted from SDL's `SDL_hidapi_switch2.c`;
-its input and calibration formats are used by the C# parser. The adapted portions
+The NS2 Pro USB command sequence and HD-rumble encoding are adapted from SDL's
+`SDL_hidapi_switch2.c`; its input, IMU and calibration formats are used by the C# parser. The adapted portions
 retain SDL's zlib license and are marked as altered. See [full notice](licenses/SDL.txt).
 No SDL or libusb binary is bundled; the transport uses Windows WinUSB and HID APIs.
 
@@ -41,7 +41,7 @@ SOFTWARE.
 ## External prerequisites (not bundled)
 
 - Windows XInput API is supplied by Windows.
-- .NET 8 Windows Desktop Runtime is installed separately:
+- .NET 10 Windows Desktop Runtime is installed separately:
   https://github.com/dotnet/runtime and https://github.com/dotnet/wpf.
 - ViGEmBus driver is separately distributed under BSD-3-Clause:
   https://github.com/nefarius/ViGEmBus/blob/master/LICENSE.

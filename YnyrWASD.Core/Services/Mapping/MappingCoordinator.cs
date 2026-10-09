@@ -33,15 +33,15 @@ public sealed class MappingCoordinator : IAsyncDisposable
             var guard = _hidHideFactory();
             if (guard is null || !guard.HasPendingRestore) return null;
             guard.Restore();
-            return "已還原上次未正常結束時隱藏的實體手把。";
+            return L.T("已還原上次未正常結束時隱藏的實體手把。", "Restored controllers left hidden by an unexpected exit.");
         }
-        catch (Exception ex) { return $"無法還原 HidHide 設定：{ex.Message}"; }
+        catch (Exception ex) { return L.T($"無法還原 HidHide 設定：{ex.Message}", $"Could not restore HidHide settings: {ex.Message}"); }
     }
     public IReadOnlyList<MappingProfile> LoadProfiles() => _profileStore.LoadProfiles();
     public void SaveProfiles(IEnumerable<MappingProfile> profiles) => _profileStore.SaveProfiles(profiles);
     public bool IsRunning => _session?.IsRunning == true;
     public string? LastError => _session?.LastError;
-    public string InputSummary => _session?.InputSummary ?? "尚未啟動映射";
+    public string InputSummary => _session?.InputSummary ?? L.T("尚未啟動映射", "Mapping not started");
 
     public async Task<(bool started, string message)> StartAsync(MappingProfile profile, Action<string>? statusCallback = null)
     {
@@ -49,7 +49,7 @@ public sealed class MappingCoordinator : IAsyncDisposable
         try
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (IsRunning) return (false, "已有映射在運作，請先停止。");
+            if (IsRunning) return (false, L.T("已有映射在運作，請先停止。", "Mapping is already running; stop it first."));
             await ClearSessionAsync().ConfigureAwait(false);
             var snapshot = profile.Snapshot();
             var output = VirtualControllerFactory.Create(snapshot.OutputType);
@@ -67,14 +67,14 @@ public sealed class MappingCoordinator : IAsyncDisposable
             _session = new MappingSession(snapshot, input, output, statusCallback);
             if (!_session.TryStart())
             {
-                string message = _session.LastError ?? "無法啟動映射。";
+                string message = _session.LastError ?? L.T("無法啟動映射。", "Could not start mapping.");
                 await _session.DisposeAsync().ConfigureAwait(false);
                 _session = null;
                 return (false, message);
             }
             // Hide only after the virtual DS4 exists, so a failed start never leaves controllers hidden.
             string hideMessage = snapshot.HidePhysicalControllers ? StartHiding(snapshot.InputType) : "";
-            return (true, $"映射已啟動。{hideMessage}");
+            return (true, L.T($"映射已啟動。{hideMessage}", $"Mapping started. {hideMessage}"));
         }
         catch (Exception ex)
         {
@@ -85,7 +85,7 @@ public sealed class MappingCoordinator : IAsyncDisposable
                 _session = null;
             }
             await StopHidingAsync().ConfigureAwait(false);
-            return (false, $"無法啟動：{ex.Message}");
+            return (false, L.T($"無法啟動：{ex.Message}", $"Could not start: {ex.Message}"));
         }
         finally { _gate.Release(); }
     }
@@ -111,8 +111,8 @@ public sealed class MappingCoordinator : IAsyncDisposable
         try
         {
             _hider = _hidHideFactory();
-            if (_hider is null) return "未安裝 HidHide：遊戲可能同時看到實體手把，按鍵圖示可能在 Xbox／PS 間跳動。";
-            string appPath = Environment.ProcessPath ?? throw new InvalidOperationException("無法取得程式路徑。");
+            if (_hider is null) return L.T("未安裝 HidHide：遊戲可能同時看到實體手把，按鍵圖示可能在 Xbox／PS 間跳動。", "HidHide is not installed: games may also see the physical controller and prompts may flip between Xbox and PS.");
+            string appPath = Environment.ProcessPath ?? throw new InvalidOperationException(L.T("無法取得程式路徑。", "Could not determine the program path."));
             string message = _hider.Hide(appPath, inputType);
             HidingSince = DateTime.Now;
             var hider = _hider;
@@ -130,7 +130,7 @@ public sealed class MappingCoordinator : IAsyncDisposable
             }, token);
             return message;
         }
-        catch (Exception ex) { return $"無法自動隱藏實體手把：{ex.Message}"; }
+        catch (Exception ex) { return L.T($"無法自動隱藏實體手把：{ex.Message}", $"Could not hide physical controllers: {ex.Message}"); }
     }
 
     private async Task StopHidingAsync()

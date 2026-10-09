@@ -38,6 +38,8 @@ public class Switch2ReportTests
     [InlineData(7, 0x04, GamepadButtonFlags.DPadRight)]
     [InlineData(7, 0x08, GamepadButtonFlags.DPadLeft)]
     [InlineData(7, 0x40, GamepadButtonFlags.LeftShoulder)]
+    [InlineData(6, 0x10, GamepadButtonFlags.Guide)]
+    [InlineData(6, 0x20, GamepadButtonFlags.Touchpad)]
     public void ButtonPositionsMatchDualShockLayout(int offset, byte bit, GamepadButtonFlags expected)
     {
         var data = Report();
@@ -46,6 +48,38 @@ public class Switch2ReportTests
         Assert.Equal(expected, state.Gamepad.Buttons);
         Assert.Equal(0, state.Gamepad.LeftThumbX);
         Assert.Equal(0, state.Gamepad.LeftThumbY);
+    }
+
+    [Fact]
+    public void MotionIsRemappedToDualShockAxesAndAccelScaled()
+    {
+        var data = Report();
+        Assert.False(Switch2ReportParser.TryParseMotion(data, out _)); // No sensor timestamp yet.
+        data[0x2b] = 1;
+        void Put(int offset, short value) => System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(data.AsSpan(offset), value);
+        Put(0x31, 100); Put(0x33, 4096); Put(0x35, -200);   // accel x, z, y (raw order)
+        Put(0x37, 11); Put(0x39, 33); Put(0x3b, 22);        // gyro x, z, y (raw order)
+        Assert.True(Switch2ReportParser.TryParseMotion(data, out var m));
+        Assert.Equal(new MotionSample(11, 22, -33, 200, -400, -8192), m);
+        Put(0x31, short.MaxValue);
+        Switch2ReportParser.TryParseMotion(data, out m);
+        Assert.Equal(short.MaxValue, m.AccelX); // Clamped, not wrapped.
+    }
+
+    [Fact]
+    public void RumbleReportMatchesSdlEncoding()
+    {
+        var off = Switch2Rumble.BuildReport(0, 0, 3);
+        Assert.Equal(0x02, off[0]);
+        Assert.Equal(0x53, off[1]);
+        Assert.Equal([0x87, 0x01, 0x20, 0x11, 0x00], off[2..7]); // Frequencies only.
+        Assert.Equal(off[1..7], off[0x11..0x17]);               // Second actuator mirrors the first.
+
+        var full = Switch2Rumble.BuildReport(255, 255, 0x15);
+        Assert.Equal(0x55, full[1]);                            // Sequence wraps at 4 bits.
+        ushort amp = 29000;                                     // Full scale clamps to SDL's maximum.
+        Assert.Equal((byte)(((amp >> 4) & 0xFC) | 0x01), full[3]);
+        Assert.Equal((byte)(amp >> 8), full[6]);
     }
 
     [Fact]

@@ -70,6 +70,24 @@ public class AutoInputReaderTests
     }
 
     [Fact]
+    public void RumbleAndMotionFollowTheActiveSource()
+    {
+        var ns2 = new FakeSource { Available = true };
+        var xbox = new FakeSource { Available = true };
+        using var reader = new AutoInputReader(ns2, xbox);
+        reader.TryGetState(out _);
+        reader.SetRumble(100, 20);
+        Assert.Equal((100, 20), ns2.Rumble);
+        Assert.True(reader.TryGetMotion(out var motion));
+        Assert.Equal(ns2.Motion, motion);
+
+        xbox.State = Pressed(GamepadButtonFlags.A);
+        reader.TryGetState(out _);
+        Assert.Equal((0, 0), ns2.Rumble);    // Stopped on the old controller...
+        Assert.Equal((100, 20), xbox.Rumble); // ...and replayed on the new one.
+    }
+
+    [Fact]
     public void DisposesBothSources()
     {
         var ns2 = new FakeSource();
@@ -78,8 +96,12 @@ public class AutoInputReaderTests
         Assert.True(ns2.Disposed && xbox.Disposed);
     }
 
-    private sealed class FakeSource : IInputReader
+    private sealed class FakeSource : IInputReader, IRumbleTarget, IMotionSource
     {
+        public (int Large, int Small) Rumble { get; private set; }
+        public MotionSample Motion { get; } = new(1, 2, 3, 4, 5, 6);
+        public void SetRumble(byte large, byte small) => Rumble = (large, small);
+        public bool TryGetMotion(out MotionSample motion) { motion = Motion; return Available; }
         public bool Available { get; set; }
         public bool Throw { get; set; }
         public State State { get; set; }

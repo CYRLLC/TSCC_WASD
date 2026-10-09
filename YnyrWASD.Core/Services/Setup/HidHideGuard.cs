@@ -17,12 +17,16 @@ public sealed partial class HidHideGuard
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private readonly Func<IReadOnlyList<string>, string> _run;
+    private readonly Func<IEnumerable<string>> _extraDevices;
     private readonly string _recordPath;
     private readonly object _gate = new();
 
-    public HidHideGuard(Func<IReadOnlyList<string>, string> run, string? recordPath = null)
+    /// <param name="extraDevices">Non-HID controllers HidHide can also hide (wired Xbox), which --dev-gaming omits.</param>
+    public HidHideGuard(Func<IReadOnlyList<string>, string> run, string? recordPath = null,
+        Func<IEnumerable<string>>? extraDevices = null)
     {
         _run = run;
+        _extraDevices = extraDevices ?? (() => []);
         _recordPath = recordPath ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "YnyrWASD", "hidhide-restore.json");
     }
@@ -31,7 +35,7 @@ public sealed partial class HidHideGuard
     public static HidHideGuard? TryCreate()
     {
         string? cli = FindCli();
-        return cli is null ? null : new HidHideGuard(args => RunCli(cli, args));
+        return cli is null ? null : new HidHideGuard(args => RunCli(cli, args), extraDevices: WiredXbox);
     }
 
     public bool HasPendingRestore => File.Exists(_recordPath);
@@ -45,7 +49,7 @@ public sealed partial class HidHideGuard
         lock (_gate)
         {
             if (Contains(_run(["--inv-state"]), "--inv-on"))
-                return "HidHide 為反向清單模式，未自動隱藏實體手把。";
+                return L.T("HidHide 為反向清單模式，未自動隱藏實體手把。", "HidHide is in inverse-list mode; physical controllers were not hidden.");
 
             var record = Load() ?? new Record
             {
@@ -56,8 +60,9 @@ public sealed partial class HidHideGuard
             };
             var alreadyHidden = ParseQuoted(_run(["--dev-list"]), "--dev-hide").ToHashSet(StringComparer.OrdinalIgnoreCase);
             alreadyHidden.UnionWith(record.Devices);
-            var targets = ParseGamingDevices(_run(["--dev-gaming"]))
+            var targets = ParseGamingDevices(_run(["--dev-gaming"])).Concat(_extraDevices())
                 .Where(path => Matches(path, inputType) && !alreadyHidden.Contains(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
             bool firstCall = !HasPendingRestore;
             if (!firstCall && targets.Count == 0) return Summary(record);
@@ -124,8 +129,8 @@ public sealed partial class HidHideGuard
     }
 
     private static string Summary(Record record) => record.Devices.Count == 0
-        ? "HidHide 已啟用；目前沒有需要隱藏的實體手把。"
-        : $"HidHide 已隱藏 {record.Devices.Count} 個實體手把介面，遊戲只會看到虛擬 DS4。";
+        ? L.T("HidHide 已啟用；目前沒有需要隱藏的實體手把。", "HidHide is on; no physical controllers needed hiding.")
+        : L.T($"HidHide 已隱藏 {record.Devices.Count} 個實體手把介面，遊戲只會看到虛擬 DS4。", $"HidHide hid {record.Devices.Count} physical controller interface(s); games only see the virtual DS4.");
 
     private static bool Contains(string text, string value) => text.Contains(value, StringComparison.OrdinalIgnoreCase);
 
@@ -133,13 +138,19 @@ public sealed partial class HidHideGuard
     {
         if (!File.Exists(_recordPath)) return null;
         return JsonSerializer.Deserialize<Record>(File.ReadAllText(_recordPath))
-            ?? throw new InvalidDataException("HidHide 還原紀錄無效。");
+            ?? throw new InvalidDataException(L.T("HidHide 還原紀錄無效。", "The HidHide restore record is invalid."));
     }
 
     private void Save(Record record)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_recordPath)!);
         File.WriteAllText(_recordPath, JsonSerializer.Serialize(record, JsonOptions));
+    }
+
+    private static IEnumerable<string> WiredXbox()
+    {
+        try { return Input.WindowsDevicePaths.FindWiredXbox(); }
+        catch { return []; } // Enumeration problems must not block HID hiding.
     }
 
     private static string? FindCli()
@@ -167,16 +178,16 @@ public sealed partial class HidHideGuard
             RedirectStandardOutput = true, RedirectStandardError = true
         };
         foreach (var arg in args) info.ArgumentList.Add(arg);
-        using var process = Process.Start(info) ?? throw new IOException("無法啟動 HidHideCLI。");
+        using var process = Process.Start(info) ?? throw new IOException(L.T("無法啟動 HidHideCLI。", "Could not start HidHideCLI."));
         var stdout = process.StandardOutput.ReadToEndAsync();
         var stderr = process.StandardError.ReadToEndAsync();
         if (!process.WaitForExit(10_000))
         {
             try { process.Kill(); } catch { /* Already exited. */ }
-            throw new TimeoutException("HidHideCLI 沒有回應。");
+            throw new TimeoutException(L.T("HidHideCLI 沒有回應。", "HidHideCLI did not respond."));
         }
         if (process.ExitCode != 0)
-            throw new IOException($"HidHideCLI 失敗（{process.ExitCode}）：{stderr.Result.Trim()}");
+            throw new IOException(L.T($"HidHideCLI 失敗（{process.ExitCode}）：{stderr.Result.Trim()}", $"HidHideCLI failed ({process.ExitCode}): {stderr.Result.Trim()}"));
         return stdout.Result;
     }
 

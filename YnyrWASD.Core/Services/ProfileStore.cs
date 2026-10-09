@@ -32,7 +32,7 @@ public sealed class ProfileStore
         }
         // Never replace an unreadable or malformed user file with defaults.
         var profiles = JsonSerializer.Deserialize<List<MappingProfile>>(File.ReadAllText(_profilePath), Options)
-            ?? throw new InvalidDataException("設定檔不能是 null。");
+            ?? throw new InvalidDataException(L.T("設定檔不能是 null。", "Profiles cannot be null."));
         Validate(profiles);
         return profiles;
     }
@@ -61,13 +61,13 @@ public sealed class ProfileStore
 
     private static void Validate(List<MappingProfile> profiles)
     {
-        if (profiles.Count == 0) throw new InvalidDataException("至少需要一個設定檔。");
+        if (profiles.Count == 0) throw new InvalidDataException(L.T("至少需要一個設定檔。", "At least one profile is required."));
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var profile in profiles)
         {
-            if (profile is null) throw new InvalidDataException("設定檔項目不能是 null。");
+            if (profile is null) throw new InvalidDataException(L.T("設定檔項目不能是 null。", "A profile entry cannot be null."));
             profile.Validate();
-            if (!ids.Add(profile.Id)) throw new InvalidDataException("設定檔 ID 不能重複。");
+            if (!ids.Add(profile.Id)) throw new InvalidDataException(L.T("設定檔 ID 不能重複。", "Profile IDs must be unique."));
         }
     }
 }

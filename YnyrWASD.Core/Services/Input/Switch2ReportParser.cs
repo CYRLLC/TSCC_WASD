@@ -48,6 +48,8 @@ public static class Switch2ReportParser
         if ((data[6] & 0x02) != 0) buttons |= GamepadButtonFlags.Start;
         if ((data[6] & 0x04) != 0) buttons |= GamepadButtonFlags.RightThumb;
         if ((data[6] & 0x08) != 0) buttons |= GamepadButtonFlags.LeftThumb;
+        if ((data[6] & 0x10) != 0) buttons |= GamepadButtonFlags.Guide;    // Home → PS
+        if ((data[6] & 0x20) != 0) buttons |= GamepadButtonFlags.Touchpad; // Capture → touchpad click
         if ((data[7] & 0x01) != 0) buttons |= GamepadButtonFlags.DPadDown;
         if ((data[7] & 0x02) != 0) buttons |= GamepadButtonFlags.DPadUp;
         if ((data[7] & 0x04) != 0) buttons |= GamepadButtonFlags.DPadRight;
@@ -68,5 +70,53 @@ public static class Switch2ReportParser
             }
         };
         return true;
+    }
+
+    /// <summary>
+    /// Reads the IMU block of report 0x05 and converts it to DualShock 4 raw axes.
+    /// Returns false when the controller is not streaming sensor data (zero sensor timestamp).
+    /// </summary>
+    public static bool TryParseMotion(ReadOnlySpan<byte> data, out MotionSample motion)
+    {
+        motion = default;
+        if (data.Length != 64 || data[0] != 0x05) return false;
+        if (BinaryPrimitives.ReadUInt32LittleEndian(data[0x2b..]) == 0) return false;
+        // Axis order and signs follow SDL's conversion to the DS4-compatible convention.
+        // NS2 gyro full scale is about ±2000 deg/s like DS4, so raw values carry over;
+        // NS2 accel is ±8 g (4096 LSB/g) versus DS4's 8192 LSB/g.
+        static short Accel(int value) => (short)Math.Clamp(value * 2, short.MinValue, short.MaxValue);
+        static short Negate(short value) => value == short.MinValue ? short.MaxValue : (short)-value;
+        motion = new MotionSample(
+            GyroX: Raw(data, 0x37), GyroY: Raw(data, 0x3b), GyroZ: Negate(Raw(data, 0x39)),
+            AccelX: Accel(Raw(data, 0x31)), AccelY: Accel(Raw(data, 0x35)), AccelZ: Accel(-Raw(data, 0x33)));
+        return true;
+    }
+
+    private static short Raw(ReadOnlySpan<byte> data, int offset) => BinaryPrimitives.ReadInt16LittleEndian(data[offset..]);
+}
+
+/// <summary>NS2 Pro HD rumble output report. Encoding adapted from SDL_hidapi_switch2.c (zlib).</summary>
+public static class Switch2Rumble
+{
+    private const ushort HighFrequency = 0x187, LowFrequency = 0x112;
+    private const int MaxAmplitude = 29000; // SDL clamps to protect the actuators.
+
+    /// <param name="large">Low-frequency motor, 0–255.</param>
+    /// <param name="small">High-frequency motor, 0–255.</param>
+    public static byte[] BuildReport(byte large, byte small, int sequence)
+    {
+        var report = new byte[64];
+        ushort lowAmp = (ushort)(large * 257 * MaxAmplitude / ushort.MaxValue);
+        ushort highAmp = (ushort)(small * 257 * MaxAmplitude / ushort.MaxValue);
+        report[0] = 0x02;
+        report[1] = (byte)(0x50 | (sequence & 0x0F));
+        report[2] = (byte)(HighFrequency & 0xFF);
+        report[3] = (byte)(((highAmp >> 4) & 0xFC) | ((HighFrequency >> 8) & 0x03));
+        report[4] = (byte)((highAmp >> 12) | (LowFrequency << 4));
+        report[5] = (byte)((lowAmp & 0xC0) | ((LowFrequency >> 4) & 0x3F));
+        report[6] = (byte)(lowAmp >> 8);
+        // The Pro controller has two actuators; SDL drives both with the same packet.
+        report.AsSpan(1, 6).CopyTo(report.AsSpan(0x11));
+        return report;
     }
 }

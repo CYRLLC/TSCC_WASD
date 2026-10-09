@@ -1,6 +1,21 @@
 # Changelog
 
-## 0.3.0 — preview (unreleased)
+## 0.4.0 — preview
+
+- Upgraded to .NET 10 (LTS); .NET 8 support ends in November 2026. Updated test packages and CI actions.
+- Rumble forwarding from games to Xbox (XInput) and NS2 Pro (HD rumble), with a per-profile switch.
+- PS button from Xbox Guide / NS2 Home; touchpad click from NS2 Capture.
+- NS2 Pro gyro and accelerometer forwarded as DualShock 4 motion.
+- The virtual DS4 now receives full raw reports (needed for PS button, touchpad and motion).
+- Wired Xbox controllers (XUSB/GIP) are hidden too; ViGEm virtual pads are excluded.
+- Start with Windows (per-user Run entry), notification-area icon, automatic mapping, and
+  automatic Steam launch/restart after hiding, so Steam never needs a manual restart.
+- Bilingual UI (English / Traditional Chinese), following Windows or chosen in settings.
+- Opening the app again brings the running instance forward.
+- The post-stop "restart Steam?" prompt now covers any Steam that started while controllers were hidden.
+- New app icon; code-signing plan documented in docs/SIGNING.md.
+
+## 0.3.0 — preview
 
 - Auto-detect input (new default): follows whichever of NS2 Pro USB / XInput is being used.
 - Automatic HidHide isolation while mapping, with exact restore on stop and crash recovery on launch.

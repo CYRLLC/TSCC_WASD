@@ -20,9 +20,10 @@ freely, subject to the following restrictions:
 Code and logic contributed by Valve Corporation under the SDL zlib license.
 
 YnyrWASD contains an altered C# adaptation of the Switch 2 USB initialization
-sequence and uses the documented report/calibration layout from SDL's
-SDL_hidapi_switch2.c. It is not an official SDL component.
-Affected files: Switch2Protocol.cs, Switch2ReportParser.cs, Switch2UsbControl.cs.
+sequence, the HD rumble output encoding, and the input/IMU report and calibration
+layout from SDL's SDL_hidapi_switch2.c. It is not an official SDL component.
+Affected files: Switch2Protocol.cs, Switch2ReportParser.cs (including Switch2Rumble),
+Switch2UsbControl.cs.
 
 Reference revision: 8a1684fbbc8b04c94cdf6b304450c5d941d0cafb
 https://github.com/libsdl-org/SDL/blob/8a1684fbbc8b04c94cdf6b304450c5d941d0cafb/src/joystick/hidapi/SDL_hidapi_switch2.c

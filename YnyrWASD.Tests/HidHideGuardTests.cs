@@ -60,11 +60,21 @@ public class HidHideGuardTests
     }
 
     [Fact]
+    public void AlsoHidesWiredXboxDevicesSuppliedOutsideDevGaming()
+    {
+        const string wired = @"USB\VID_045E&PID_0B12\3032363030333130";
+        var cli = new FakeCli { Gaming = Gaming(Ns2) };
+        var guard = new HidHideGuard(cli.Run, TempRecord(), () => [wired, Ns2]);
+        guard.Hide(App, InputDeviceType.XInput);
+        Assert.Equal(["--app-reg", App, "--dev-hide", wired, "--cloak-on"], cli.Changes.Single());
+    }
+
+    [Fact]
     public void InverseModeIsLeftAlone()
     {
         var cli = new FakeCli { Gaming = Gaming(Ns2), Inverse = true };
         var guard = new HidHideGuard(cli.Run, TempRecord());
-        Assert.Contains("反向", guard.Hide(App, InputDeviceType.Auto));
+        Assert.Contains(YnyrWASD.Core.L.T("反向", "inverse"), guard.Hide(App, InputDeviceType.Auto));
         Assert.Empty(cli.Changes);
         Assert.False(guard.HasPendingRestore);
     }

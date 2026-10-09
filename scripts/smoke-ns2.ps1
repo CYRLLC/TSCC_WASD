@@ -1,7 +1,7 @@
 #requires -Version 7.4
 [CmdletBinding()]
 param(
-    [string] $AppDirectory = (Join-Path $PSScriptRoot '../YnyrWASD.Core/bin/Release/net8.0'),
+    [string] $AppDirectory = (Join-Path $PSScriptRoot '../YnyrWASD.Core/bin/Release/net10.0-windows'),
     [ValidateRange(1,60)][int] $Seconds = 15,
     [switch] $MapToDs4
 )

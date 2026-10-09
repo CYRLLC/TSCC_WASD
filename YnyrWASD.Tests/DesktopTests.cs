@@ -27,15 +27,19 @@ public class DesktopTests
             try
             {
                 var store = new ProfileStore(Path.Combine(dir, "profiles.json"));
-                vm = new MainViewModel(store);
+                // Screenshot runs pick the UI language; normal runs keep the default.
+                if (Environment.GetEnvironmentVariable("YNYRWASD_LANGUAGE") is { Length: > 0 } language)
+                    YnyrWASD.Core.L.Apply(language);
+                vm = new MainViewModel(store, new AppSettingsStore(Path.Combine(dir, "settings.json")));
                 Assert.Single(vm.Profiles);
                 vm.NewCommand.Execute(null);
                 Assert.Equal(2, vm.Profiles.Count);
-                vm.SelectedProfile!.Name = "測試設定";
+                string profileName = YnyrWASD.Core.L.T("測試設定", "Test profile");
+                vm.SelectedProfile!.Name = profileName;
                 vm.SelectedProfile.DeadZone = 0.2;
                 vm.SelectedProfile.InputType = YnyrWASD.Core.Models.InputDeviceType.Switch2ProUsb;
                 vm.SaveCommand.Execute(null);
-                Assert.Equal("測試設定", store.LoadProfiles()[1].Name);
+                Assert.Equal(profileName, store.LoadProfiles()[1].Name);
                 Assert.Equal(0.2, store.LoadProfiles()[1].DeadZone);
                 Assert.Equal(YnyrWASD.Core.Models.InputDeviceType.Switch2ProUsb, store.LoadProfiles()[1].InputType);
                 vm.ReloadCommand.Execute(null);
@@ -54,15 +58,15 @@ public class DesktopTests
                     Resources = window.Resources, DataContext = vm
                 };
                 System.Windows.Documents.TextElement.SetForeground(surface, window.Foreground);
-                surface.Measure(new Size(980, 700));
-                surface.Arrange(new Rect(0, 0, 980, 700));
+                surface.Measure(new Size(980, 780));
+                surface.Arrange(new Rect(0, 0, 980, 780));
                 surface.UpdateLayout();
                 Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
                 string? screenshotDir = Environment.GetEnvironmentVariable("YNYRWASD_SCREENSHOTS");
                 if (!string.IsNullOrEmpty(screenshotDir))
                 {
                     Directory.CreateDirectory(screenshotDir);
-                    var bitmap = new RenderTargetBitmap(980, 700, 96, 96, PixelFormats.Pbgra32);
+                    var bitmap = new RenderTargetBitmap(980, 780, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(surface);
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));

@@ -15,7 +15,7 @@ public sealed class MappingSession : IAsyncDisposable
     private Task? _loopTask;
     private bool _disposed;
     private int _inputReleased;
-    private volatile string _inputSummary = "尚未收到輸入";
+    private volatile string _inputSummary = L.T("尚未收到輸入", "No input yet");
 
     public MappingSession(MappingProfile profile, IInputReader input, IVirtualController output,
         Action<string>? statusCallback = null)
@@ -24,6 +24,12 @@ public sealed class MappingSession : IAsyncDisposable
         _input = input;
         _output = output;
         _statusCallback = statusCallback;
+        _output.RumbleRequested += OnRumble;
+    }
+
+    private void OnRumble(byte large, byte small)
+    {
+        if (_profile.ForwardRumble && _input is IRumbleTarget target) target.SetRumble(large, small);
     }
 
     private static readonly TimeSpan OutputRetryDelay = TimeSpan.FromSeconds(1);
@@ -37,7 +43,7 @@ public sealed class MappingSession : IAsyncDisposable
         if (_cts is not null) throw new InvalidOperationException("A session can only be started once.");
         if (!_output.TryConnect(out var error))
         {
-            LastError = error ?? "無法建立虛擬手把。";
+            LastError = error ?? L.T("無法建立虛擬手把。", "Could not create the virtual controller.");
             return false;
         }
         _cts = new CancellationTokenSource();
@@ -63,24 +69,27 @@ public sealed class MappingSession : IAsyncDisposable
                     state = default;
                 }
                 _inputSummary = available
-                    ? $"按鍵：{state.Gamepad.Buttons} · 左搖桿 ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · 右搖桿 ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}"
-                    : "尚未收到有效輸入（輸出歸零）";
+                    ? L.T($"按鍵：{state.Gamepad.Buttons} · 左搖桿 ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · 右搖桿 ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}",
+                        $"Buttons: {state.Gamepad.Buttons} · Left stick ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · Right stick ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}")
+                    : L.T("尚未收到有效輸入（輸出歸零）", "No valid input (output neutral)");
                 string status;
                 try
                 {
                     if (!_output.IsConnected && !_output.TryConnect(out var connectError))
-                        throw new InvalidOperationException(connectError ?? "無法重新建立虛擬手把。");
+                        throw new InvalidOperationException(connectError ?? L.T("無法重新建立虛擬手把。", "Could not recreate the virtual controller."));
                     // Always send neutral input on disconnect; never leave buttons held.
-                    _output.PushState(available ? state : default, _profile.DeadZone);
-                    status = available ? $"映射運作中：{_input.Status} → DualShock 4"
-                        : $"等待輸入（虛擬 DS4 保持連線，輸出已歸零）：{_input.Status}";
+                    MotionSample? motion = available && _input is IMotionSource source && source.TryGetMotion(out var sample)
+                        ? sample : null;
+                    _output.PushState(available ? state : default, _profile.DeadZone, motion);
+                    status = available ? L.T($"映射運作中：{_input.Status} → DualShock 4", $"Mapping: {_input.Status} → DualShock 4")
+                        : L.T($"等待輸入（虛擬 DS4 保持連線，輸出已歸零）：{_input.Status}", $"Waiting for input (virtual DS4 stays connected, output neutral): {_input.Status}");
                 }
                 catch (Exception ex)
                 {
                     LastError = ex.Message;
                     try { _output.Disconnect(); }
                     catch { /* Reconnect will be attempted on the next pass. */ }
-                    status = $"虛擬 DS4 發生錯誤，稍後自動重新連線：{ex.Message}";
+                    status = L.T($"虛擬 DS4 發生錯誤，稍後自動重新連線：{ex.Message}", $"Virtual DS4 error, reconnecting shortly: {ex.Message}");
                     if (previousStatus != status) { previousStatus = status; Report(status); }
                     await Task.Delay(OutputRetryDelay, token).ConfigureAwait(false);
                     continue;
@@ -136,6 +145,9 @@ public sealed class MappingSession : IAsyncDisposable
 
     private void ReleaseInput()
     {
-        if (Interlocked.Exchange(ref _inputReleased, 1) == 0) _input.Dispose();
+        if (Interlocked.Exchange(ref _inputReleased, 1) != 0) return;
+        _output.RumbleRequested -= OnRumble;
+        try { (_input as IRumbleTarget)?.SetRumble(0, 0); }
+        finally { _input.Dispose(); }
     }
 }
