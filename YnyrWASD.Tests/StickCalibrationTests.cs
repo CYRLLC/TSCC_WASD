@@ -33,6 +33,23 @@ public class StickCalibrationTests
     }
 
     [Fact]
+    public void AdaptiveCenterLearnsTheRestingOffset()
+    {
+        // Measured on a real NS2 Pro: right stick X rests at raw 2143-2146, not 2048.
+        var adaptive = new AdaptiveStickCalibration();
+        var calibration = adaptive.Observe(2145, 2064);
+        Assert.InRange(calibration.X.Normalize(2145), -100, 100);
+        Assert.InRange(calibration.Y.Normalize(2064), -100, 100);
+
+        // Holding a real tilt for a long time must not drag the center toward it.
+        for (int i = 0; i < 5000; i++) calibration = adaptive.Observe(2145 + 600, 2064);
+        Assert.InRange(calibration.X.Center, 2140, 2150);
+        // Full push from the learned center still saturates.
+        calibration = adaptive.Observe(2145 + 1300, 2064);
+        Assert.Equal(short.MaxValue, calibration.X.Normalize(2145 + 1300));
+    }
+
+    [Fact]
     public void AdaptiveRangeStaysValidAtRawExtremes()
     {
         var calibration = new AdaptiveStickCalibration().Observe(4095, 0);
