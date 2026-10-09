@@ -83,6 +83,14 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
                 "Opened the official downloads. ViGEmBus is required; HidHide is strongly recommended (no setup needed).");
             return Task.CompletedTask;
         });
+        CalibrateCommand = Command(() =>
+        {
+            // The wizard opens its own reader, so mapping must not hold the controller.
+            var window = new CalibrationWindow { Owner = Application.Current?.MainWindow };
+            if (window.ShowDialog() == true)
+                StatusMessage = L.T("已儲存你的搖桿校準，下次啟動映射時套用。", "Your stick calibration was saved and applies the next time mapping starts.");
+            return Task.CompletedTask;
+        }, () => !IsRunning);
         OpenProfilesCommand = Command(() =>
         {
             var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "YnyrWASD");
@@ -199,6 +207,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public ICommand ExportCommand { get; }
     public ICommand InstallDepsCommand { get; }
     public ICommand OpenProfilesCommand { get; }
+    public ICommand CalibrateCommand { get; }
 
     private void Reload()
     {

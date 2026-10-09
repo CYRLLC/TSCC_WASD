@@ -78,6 +78,7 @@ HidHide 為反向清單模式時不會更動。藍牙 Xbox 與 NS2 Pro 的隱藏
 - 「登入 Windows 時自動啟動」會寫入目前使用者的 `HKCU\...\Run`，取消勾選即移除。
 - 語言可選「跟隨 Windows／繁體中文／English」，重新開啟程式後套用。
 
+NS2 Pro 若推到底卻像輕推、或放開時飄移，停止映射後按「校準 NS2 Pro 搖桿」照步驟做一次即可。
 NS2 Pro 的細節見 [NS2 Pro 設定說明](NS2-PRO.md)，常見問題見[疑難排解](TROUBLESHOOTING.md)。
 
 ## 授權

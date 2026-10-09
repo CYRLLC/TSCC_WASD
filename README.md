@@ -120,6 +120,10 @@ interface, YnyrWASD reads Steam-initialized HID reports and uses nominal calibra
 Otherwise it initializes the controller and reads its calibration itself.
 Button layout follows physical position: B→Cross, A→Circle, Y→Square, X→Triangle;
 Home→PS, Capture→touchpad click. Gyro/accelerometer and HD rumble are supported.
+While Steam holds the controller its factory stick calibration can't be read; use
+**Calibrate NS2 Pro sticks** (release, then circle both sticks at the edge) for exact
+full-push and resting values. Without it YnyrWASD uses a remembered factory calibration or
+learns the stick travel automatically.
 See [NS2 Pro details](docs/NS2-PRO.md).
 
 ## Build, test and package

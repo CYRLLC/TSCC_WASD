@@ -59,20 +59,61 @@ public class StickCalibrationTests
     }
 
     [Fact]
-    public void CalibrationCacheRoundTripsAndRejectsInvalidData()
+    public void CalibrationCacheKeepsUserAndFactorySeparate()
     {
         string path = Path.Combine(Path.GetTempPath(), "YnyrWASD-tests", Guid.NewGuid().ToString("N"), "ns2.json");
         var cache = new Switch2CalibrationCache(path);
-        Assert.False(cache.TryLoad(out _, out _));
+        Assert.False(cache.TryLoadFactory(out _, out _));
+        Assert.False(cache.TryLoadUser(out _, out _));
 
-        var left = new Switch2StickCalibration(new(1990, 1350, 1400), new(2120, 1300, 1380));
-        var right = new Switch2StickCalibration(new(2140, 1320, 1330), new(2060, 1310, 1290));
-        cache.Save(left, right);
-        Assert.True(cache.TryLoad(out var loadedLeft, out var loadedRight));
-        Assert.Equal(left, loadedLeft);
-        Assert.Equal(right, loadedRight);
+        var factory = new Switch2StickCalibration(new(1990, 1350, 1400), new(2120, 1300, 1380));
+        var user = new Switch2StickCalibration(new(2140, 1320, 1330), new(2060, 1310, 1290));
+        cache.SaveUser(user, user);
+        cache.SaveFactory(factory, factory); // Reading the factory data later must not erase the user's.
+        Assert.True(cache.TryLoadUser(out var loadedUser, out _));
+        Assert.Equal(user, loadedUser);
+        Assert.True(cache.TryLoadFactory(out var loadedFactory, out _));
+        Assert.Equal(factory, loadedFactory);
+
+        cache.ClearUser();
+        Assert.False(cache.TryLoadUser(out _, out _));
+        Assert.True(cache.TryLoadFactory(out _, out _));
 
         File.WriteAllText(path, "{ broken");
-        Assert.False(cache.TryLoad(out _, out _));
+        Assert.False(cache.TryLoadFactory(out _, out _));
+    }
+
+    [Fact]
+    public void CalibratorUsesRestingCenterAndMeasuredTravel()
+    {
+        var calibrator = new StickCalibrator();
+        for (int i = 0; !calibrator.CenterReady; i++)
+            calibrator.AddCenterSample(new RawSticks(1985 + i % 3, 2123, 2144, 2064));
+        Assert.False(calibrator.RangeReady);
+        Assert.Throws<InvalidOperationException>(() => calibrator.Result());
+
+        // Circle both sticks: left reaches ±1300, right reaches ±1250.
+        foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+            calibrator.AddRangeSample(new RawSticks(1986 + dx * 1300, 2123 + dy * 1300, 2144 + dx * 1250, 2064 + dy * 1250));
+        Assert.True(calibrator.RangeReady);
+
+        var (left, right) = calibrator.Result();
+        Assert.Equal(1986, left.X.Center);
+        Assert.Equal(2144, right.X.Center);
+        Assert.InRange(left.X.Normalize(1986), -50, 50);                 // At rest: zero.
+        Assert.Equal(short.MaxValue, left.X.Normalize(1986 + 1300));      // Full push: full output.
+        Assert.Equal(short.MinValue, right.Y.Normalize(2064 - 1250));
+        Assert.InRange(left.X.Normalize(1986 + 650), 16500, 18000);       // Half push stays proportional.
+    }
+
+    [Fact]
+    public void CalibratorRejectsTooShortTravel()
+    {
+        var calibrator = new StickCalibrator();
+        while (!calibrator.CenterReady) calibrator.AddCenterSample(new RawSticks(2048, 2048, 2048, 2048));
+        calibrator.AddRangeSample(new RawSticks(2048 + 300, 2048 + 300, 2048 + 300, 2048 + 300));
+        Assert.False(calibrator.RangeReady);
+        Assert.Equal(0.5, calibrator.Progress[0]);
+        Assert.Equal(0.0, calibrator.Progress[1]);
     }
 }

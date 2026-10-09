@@ -82,6 +82,10 @@
                                   Content="{app:T Zh=把遊戲震動轉給實體手把, En='Forward game rumble to the physical controller'}"/>
                         <TextBlock Style="{StaticResource Hint}"
                                    Text="{app:T Zh='NS2 Pro 的 Home 鍵對應 PS 鍵、截圖鍵對應觸控板按下；陀螺儀會轉成 DS4 體感。', En='NS2 Pro Home maps to PS, Capture to touchpad click, and its gyro becomes DS4 motion.'}"/>
+                        <Button Content="{app:T Zh='校準 NS2 Pro 搖桿', En='Calibrate NS2 Pro sticks'}" Command="{Binding CalibrateCommand}"
+                                HorizontalAlignment="Left" Margin="20,0,0,4"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="{app:T Zh='推到底卻只像輕推、或放開時會飄移時使用。停止映射後才能校準。', En='Use this if a full push feels like a light one or the stick drifts at rest. Stop mapping first.'}"/>
                         <TextBlock Text="{app:T Zh=設定檔名稱, En='Profile name'}"/>
                         <TextBox Text="{Binding SelectedProfile.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="100"
                                  AutomationProperties.Name="{app:T Zh=設定檔名稱, En='Profile name'}"/>

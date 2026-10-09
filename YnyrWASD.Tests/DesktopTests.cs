@@ -90,4 +90,51 @@ public class DesktopTests
         thread.Start();
         await completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
     }
+
+    [Fact]
+    public async Task CalibrationWizardLoadsAndRenders()
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            CalibrationWindow? window = null;
+            try
+            {
+                // Without an NS2 Pro attached the wizard waits on its first step; it must still load.
+                window = new CalibrationWindow();
+                var rangePanel = (FrameworkElement)window.FindName("RangePanel");
+                var content = (FrameworkElement)window.Content;
+                window.Content = null;
+                var surface = new System.Windows.Controls.Border { Child = content, Background = window.Background, Resources = window.Resources };
+                System.Windows.Documents.TextElement.SetForeground(surface, window.Foreground);
+                surface.Measure(new Size(560, double.PositiveInfinity));
+                surface.Arrange(new Rect(new Point(), surface.DesiredSize));
+                surface.UpdateLayout();
+                Assert.True(surface.ActualHeight > 100);
+                string? screenshotDir = Environment.GetEnvironmentVariable("YNYRWASD_SCREENSHOTS");
+                if (!string.IsNullOrEmpty(screenshotDir))
+                {
+                    // Show the second step so the screenshot includes the progress bars.
+                    rangePanel.Visibility = Visibility.Visible;
+                    surface.Measure(new Size(560, double.PositiveInfinity));
+                    surface.Arrange(new Rect(new Point(), surface.DesiredSize));
+                    surface.UpdateLayout();
+                    Directory.CreateDirectory(screenshotDir);
+                    var bitmap = new RenderTargetBitmap((int)surface.ActualWidth, (int)surface.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(surface);
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                    using var stream = File.Create(Path.Combine(screenshotDir, "calibration.png"));
+                    encoder.Save(stream);
+                }
+                window.Close();
+                completion.TrySetResult();
+            }
+            catch (Exception ex) { completion.TrySetException(ex); }
+            finally { Dispatcher.CurrentDispatcher.InvokeShutdown(); }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
+    }
 }
