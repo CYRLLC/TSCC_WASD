@@ -85,12 +85,13 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         });
         CalibrateCommand = Command(() =>
         {
-            // The wizard opens its own reader, so mapping must not hold the controller.
+            // The wizard reads the controller through its own shared HID handle, so mapping can keep running;
+            // a running mapping applies the saved calibration immediately.
             var window = new CalibrationWindow { Owner = Application.Current?.MainWindow };
             if (window.ShowDialog() == true)
-                StatusMessage = L.T("已儲存你的搖桿校準，下次啟動映射時套用。", "Your stick calibration was saved and applies the next time mapping starts.");
+                StatusMessage = L.T("已儲存並套用你的搖桿校準。", "Your stick calibration was saved and applied.");
             return Task.CompletedTask;
-        }, () => !IsRunning);
+        });
         OpenProfilesCommand = Command(() =>
         {
             var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "YnyrWASD");

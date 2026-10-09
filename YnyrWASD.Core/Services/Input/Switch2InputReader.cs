@@ -16,6 +16,7 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
     private RawSticks _raw;
     private bool _hasMotion;
     private volatile int _rumble; // large << 8 | small
+    private volatile bool _calibrationChanged;
     private long _receivedAt;
     private bool _hasState;
     private readonly Switch2CalibrationCache _calibrationCache;
@@ -25,6 +26,7 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
     public Switch2InputReader(Switch2CalibrationCache? calibrationCache = null)
     {
         _calibrationCache = calibrationCache ?? new Switch2CalibrationCache();
+        Switch2CalibrationCache.UserCalibrationChanged += OnCalibrationChanged;
         _worker = Task.Run(() => RunAsync(_stop.Token));
     }
     public string Status { get { lock (_gate) return _status; } }
@@ -48,6 +50,8 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
             return fresh;
         }
     }
+
+    private void OnCalibrationChanged() => _calibrationChanged = true;
 
     /// <summary>Latest uncalibrated stick positions, for the calibration wizard.</summary>
     public bool TryGetRawSticks(out RawSticks raw)
@@ -122,6 +126,20 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
                             timeout.CancelAfter(TimeSpan.FromSeconds(2));
                             int length = await stream.ReadAsync(report, timeout.Token).ConfigureAwait(false);
                             if (length == 0) throw new IOException(L.T("NS2 Pro 已斷線。", "NS2 Pro disconnected."));
+                            if (_calibrationChanged)
+                            {
+                                // The wizard saved or cleared a calibration while mapping: apply it now.
+                                _calibrationChanged = false;
+                                userCalibration = _calibrationCache.TryLoadUser(out userLeft, out userRight);
+                                if (userCalibration)
+                                {
+                                    calibration = (userLeft, userRight);
+                                    adaptiveLeft = adaptiveRight = null;
+                                }
+                                else if (sharedMode && !cachedCalibration) { adaptiveLeft = new(); adaptiveRight = new(); }
+                                else if (cachedCalibration || !sharedMode)
+                                    calibration = _calibrationCache.TryLoadFactory(out var fl, out var fr) ? (fl, fr) : calibration;
+                            }
                             if (length == 64 && report[0] == 0x05)
                             {
                                 var raw = new RawSticks(
@@ -206,6 +224,7 @@ public sealed class Switch2InputReader : IInputReader, IMotionSource, IRumbleTar
     {
         if (_disposed) return;
         _disposed = true;
+        Switch2CalibrationCache.UserCalibrationChanged -= OnCalibrationChanged;
         _stop.Cancel();
         _worker.GetAwaiter().GetResult();
         _stop.Dispose();

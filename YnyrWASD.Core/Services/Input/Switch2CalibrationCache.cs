@@ -19,10 +19,20 @@ public sealed class Switch2CalibrationCache
     public void SaveFactory(Switch2StickCalibration left, Switch2StickCalibration right) =>
         Update(file => file with { Factory = new Pair(left, right) });
 
-    public void SaveUser(Switch2StickCalibration left, Switch2StickCalibration right) =>
-        Update(file => file with { User = new Pair(left, right) });
+    /// <summary>Raised after the user calibration is saved or cleared, so a running reader can apply it.</summary>
+    public static event Action? UserCalibrationChanged;
 
-    public void ClearUser() => Update(file => file with { User = null });
+    public void SaveUser(Switch2StickCalibration left, Switch2StickCalibration right)
+    {
+        Update(file => file with { User = new Pair(left, right) });
+        UserCalibrationChanged?.Invoke();
+    }
+
+    public void ClearUser()
+    {
+        Update(file => file with { User = null });
+        UserCalibrationChanged?.Invoke();
+    }
 
     public bool TryLoadFactory(out Switch2StickCalibration left, out Switch2StickCalibration right) =>
         TryGet(Read()?.Factory, out left, out right);
