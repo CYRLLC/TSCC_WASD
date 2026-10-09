@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+**/TestResults/
+artifacts/
+*.log
+*.pfx
+*.snk
+.env
+.env.*
+!.env.example

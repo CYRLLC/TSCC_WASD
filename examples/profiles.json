@@ -1,0 +1,13 @@
+[
+  {
+    "id": "default-xinput-ds4",
+    "name": "XInput → DualShock 4",
+    "description": "Basic controller mapping",
+    "inputType": "XInput",
+    "outputType": "DualShock4",
+    "pollingRateHz": 125,
+    "deadZone": 0.08,
+    "requireDrivers": true,
+    "advanced": {}
+  }
+]

@@ -1,0 +1,59 @@
+# Third-party notices
+
+YnyrWASD original source is MIT licensed. Dependencies and adapted source retain their own licenses.
+
+## SDL Switch 2 protocol reference and adaptation
+
+The NS2 Pro USB command sequence is adapted from SDL's `SDL_hidapi_switch2.c`;
+its input and calibration formats are used by the C# parser. The adapted portions
+retain SDL's zlib license and are marked as altered. See [full notice](licenses/SDL.txt).
+No SDL or libusb binary is bundled; the transport uses Windows WinUSB and HID APIs.
+
+## Nefarius.ViGEm.Client 1.21.256 (distributed with the application)
+
+Source: https://github.com/nefarius/ViGEm.NET
+
+NuGet identifies its license as MIT and lists Copyright © Nefarius Software
+Solutions e.U. 2017–2023. The upstream license text follows:
+
+MIT License
+
+Copyright (c) 2018 Benjamin Höglinger-Stelzer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## External prerequisites (not bundled)
+
+- Windows XInput API is supplied by Windows.
+- .NET 8 Windows Desktop Runtime is installed separately:
+  https://github.com/dotnet/runtime and https://github.com/dotnet/wpf.
+- ViGEmBus driver is separately distributed under BSD-3-Clause:
+  https://github.com/nefarius/ViGEmBus/blob/master/LICENSE.
+- HidHide is optional, installed separately and not redistributed here:
+  https://github.com/nefarius/HidHide.
+
+## Development-only packages
+
+Microsoft.NET.Test.Sdk, xUnit and its Visual Studio runner are test dependencies;
+they are not included in the application ZIP. Refer to their NuGet metadata and
+upstream repositories for notices. Each project's packages.lock.json records
+versions and integrity hashes.
+
+PlayStation, DualShock, Xbox and reWASD names belong to their respective owners.
+YnyrWASD is an independent project and does not imply endorsement.

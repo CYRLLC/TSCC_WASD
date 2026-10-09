@@ -1,0 +1,13 @@
+[
+  {
+    "id": "ns2-pro-usb",
+    "name": "NS2 Pro USB → PS4",
+    "description": "Nintendo Switch 2 Pro USB；Steam 占用時使用 HID 共用模式",
+    "inputType": "Switch2ProUsb",
+    "outputType": "DualShock4",
+    "pollingRateHz": 125,
+    "deadZone": 0.08,
+    "requireDrivers": true,
+    "advanced": {}
+  }
+]

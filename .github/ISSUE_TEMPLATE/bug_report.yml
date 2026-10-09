@@ -1,0 +1,22 @@
+name: Bug report / 錯誤回報
+description: Report a reproducible problem.
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: App version, Windows version, controller model and USB/Bluetooth.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include expected/actual behavior and visible error. Remove personal paths.
+    validations:
+      required: true
+  - type: textarea
+    id: drivers
+    attributes:
+      label: Driver and game details
+      description: ViGEmBus/HidHide versions, game, Steam Input and other mappers.

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0-windows7.0": {
+      "Nefarius.ViGEm.Client": {
+        "type": "Transitive",
+        "resolved": "1.21.256",
+        "contentHash": "VJMO6hkalOZ7YdXTwcR881aTgPZlN7thEs3x6CWE/kEu7SdE5bY7QuDXkR2eqXfPAee4NrxInIAqa45PorpTsA=="
+      },
+      "ynyrwasd.core": {
+        "type": "Project",
+        "dependencies": {
+          "Nefarius.ViGEm.Client": "[1.21.256, )"
+        }
+      }
+    }
+  }
+}
