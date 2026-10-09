@@ -30,6 +30,21 @@ button input, HidHide setup, game recognition or long-running stability.
 
 ## Manual hardware validation
 
+### Auto-detect + automatic HidHide — 0.3.0, 2026-10-09
+
+Windows 11 26100, HidHide 1.2.98, Steam and DS4Windows running, Bluetooth Xbox
+Wireless Controller (`045E:0B13`) and NS2 Pro USB connected at the same time.
+
+| Check | Result |
+| --- | --- |
+| Auto mapping start: virtual DS4 created, 2 physical HID interfaces hidden, cloak on | Passed |
+| Non-allowlisted process during mapping: XInput slot 0 returns not-connected | Passed |
+| Stop / window close: cloak, hidden list and app list restored to prior state | Passed |
+| DS4Windows does not re-wrap the virtual DS4 into an extra XInput pad | Passed |
+| Yakuza 0 Director's Cut, Steam started before mapping | Prompts alternated Xbox/PS (Steam held the controller); elevated device restart was vetoed |
+| Same game, Steam Input disabled | Stable Xbox prompts (game takes PS prompts from Steam Input) |
+| Same game, Steam restarted after mapping started, Steam Input default | **Passed, user-confirmed PS prompts** |
+
 ### NS2 Pro USB — 0.2.0
 
 Steam remained running at the user's request. Shared HID mode received valid

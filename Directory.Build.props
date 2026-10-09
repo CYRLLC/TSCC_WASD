@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>YnyrWASD contributors</Authors>
     <Product>YnyrWASD</Product>
     <Description>NS2 Pro USB and XInput to virtual DualShock 4 mapper for Windows.</Description>

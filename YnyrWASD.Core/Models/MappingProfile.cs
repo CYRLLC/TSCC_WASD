@@ -7,11 +7,12 @@ namespace YnyrWASD.Core.Models;
 public class MappingProfile : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
-    private string _name = "Default XInput to DualShock 4";
-    private string? _description = "將 XInput 手把轉為虛擬 DualShock 4。PS 圖示取決於遊戲支援。";
+    private string _name = "自動偵測 → DualShock 4";
+    private string? _description = "自動使用 NS2 Pro 或 Xbox 手把，輸出虛擬 DualShock 4。PS 圖示取決於遊戲支援。";
     private int _pollingRateHz = 125;
     private double _deadZone = 0.08;
-    private InputDeviceType _inputType = InputDeviceType.XInput;
+    private InputDeviceType _inputType = InputDeviceType.Auto;
+    private bool _hidePhysicalControllers = true;
 
     private void Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
     {
@@ -25,6 +26,9 @@ public class MappingProfile : INotifyPropertyChanged
 
     public InputDeviceType InputType { get => _inputType; set => Set(ref _inputType, value); }
     public OutputControllerType OutputType { get; set; } = OutputControllerType.DualShock4;
+
+    /// <summary>映射期間以 HidHide 隱藏實體手把，讓遊戲只看到虛擬 DS4。</summary>
+    public bool HidePhysicalControllers { get => _hidePhysicalControllers; set => Set(ref _hidePhysicalControllers, value); }
 
     /// <summary>前景程式名稱 (不含路徑) 符合時自動套用。</summary>
     public string? MatchProcessName { get; set; }
@@ -48,8 +52,8 @@ public class MappingProfile : INotifyPropertyChanged
     {
         if (string.IsNullOrWhiteSpace(Id) || string.IsNullOrWhiteSpace(Name) || Name.Length > 100)
             throw new ArgumentException("設定檔需要 ID 與名稱（名稱最多 100 字）。");
-        if (InputType is not (InputDeviceType.XInput or InputDeviceType.Switch2ProUsb) || OutputType != OutputControllerType.DualShock4)
-            throw new ArgumentException("目前支援 XInput／NS2 Pro USB → DualShock4。");
+        if (InputType is not (InputDeviceType.Auto or InputDeviceType.XInput or InputDeviceType.Switch2ProUsb) || OutputType != OutputControllerType.DualShock4)
+            throw new ArgumentException("目前支援自動偵測／XInput／NS2 Pro USB → DualShock4。");
         if (PollingRateHz < 30 || PollingRateHz > 500)
             throw new ArgumentException("輪詢頻率必須介於 30–500 Hz。");
         if (!double.IsFinite(DeadZone) || DeadZone < 0 || DeadZone > 0.95)
@@ -62,7 +66,7 @@ public class MappingProfile : INotifyPropertyChanged
         return new MappingProfile
         {
             Id = Id, Name = Name, Description = Description,
-            InputType = InputType, OutputType = OutputType,
+            InputType = InputType, OutputType = OutputType, HidePhysicalControllers = HidePhysicalControllers,
             PollingRateHz = PollingRateHz, DeadZone = DeadZone,
             MatchProcessName = MatchProcessName, RequireDrivers = RequireDrivers,
             Advanced = Advanced is null ? new() : new(Advanced)

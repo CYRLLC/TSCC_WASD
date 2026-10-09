@@ -1,66 +1,104 @@
 # YnyrWASD
 
-A small Windows desktop tool that maps an XInput controller to a virtual
-DualShock 4, with USB Nintendo Switch 2 Pro support. Built with C# / .NET 8 / WPF.
-**MIT licensed · v0.2.0 preview** (SDL-derived protocol portions retain zlib licensing).
+**A free, open-source Windows tool that makes games see your Xbox or Nintendo Switch 2 Pro
+controller as a PlayStation DualShock 4, so they show PS button prompts.**
+
+It covers one common reWASD use case ("pretend my controller is a DS4") using free,
+open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
+Built with C# / .NET 8 / WPF. **MIT licensed · v0.3.0 preview.**
 
 中文使用說明：[繁體中文](docs/README.zh-TW.md)
 
-![Profile editor](docs/images/editor.png)
+![Main window](docs/images/editor.png)
 
-## What it does
+## Features
 
-- Reads the first connected XInput slot (0–3) and outputs one virtual PS4 controller.
-- Also reads Nintendo Switch 2 Pro over USB; select its input mode in the editor.
-  See [NS2 Pro setup and current limitations](docs/NS2-PRO.md).
-- Maps face buttons, D-pad, shoulders, stick clicks, sticks and analog triggers.
-- Provides editable profiles, dead zones, target polling frequency, import/export
-  and manual start/stop.
-- Releases held inputs on disconnect, cleans up virtual devices on stop/exit,
-  and keeps malformed profile files intact.
+- **Auto-detect input (default).** Watches a USB Nintendo Switch 2 Pro and Xbox/XInput
+  controllers together and follows whichever one you press. An idle controller never
+  takes over. Single-device modes are still available.
+- **One persistent virtual DS4.** It stays connected for the whole session. If the
+  controller drops, it sends neutral input; if the driver errors, it reconnects.
+- **Automatic physical-controller hiding.** When HidHide is installed, starting a mapping
+  hides the real controller from games so they only see the DS4. Prompts stop flipping
+  between Xbox and PS. Stopping restores your previous HidHide settings exactly.
+- **Steam-aware.** Detects a Steam client that grabbed the real controller before hiding
+  started, and offers to restart Steam so Steam Input only sees the DS4.
+- Face buttons, D-pad, shoulders, stick clicks, sticks and triggers; dead zone and
+  polling-rate settings; profiles with import/export.
+- No network access, telemetry, background service or auto-updater.
 
-**PS button icons depend on the game recognizing a DS4 and shipping PS artwork.**
-This tool cannot force icons in games that only support Xbox input. It is an
-early, narrowly scoped alternative inspired by reWASD, not feature parity.
+**PS prompts still depend on the game.** The game must support DualShock 4 natively or
+through Steam Input. Games that only draw Xbox artwork will keep showing it.
 
-Not implemented: arbitrary button remapping, macros, rumble forwarding,
-keyboard/mouse input, DirectInput, touchpad, gyro, DualSense output, game detection,
-automatic profile switching or overlays. Reserved JSON fields do not enable them.
+### Not implemented (yet)
 
-## Requirements and setup
+Arbitrary remapping, macros, rumble, gyro, touchpad, keyboard/mouse input, DualSense output,
+per-game profile switching and overlays. NS2 Pro works over USB only. See the [roadmap](PLAN.md).
 
-1. Windows 10/11 x64 with an XInput-compatible controller or USB NS2 Pro. Windows 11 is the local
-   validation platform; other hardware/OS combinations need confirmation.
-2. Install the latest serviced **.NET 8 Windows Desktop Runtime (x64)** from
+## Quick start
+
+1. **Windows 10/11 x64.** Windows 11 is the tested platform.
+2. Install the **.NET 8 Windows Desktop Runtime (x64)** from
    [Microsoft](https://dotnet.microsoft.com/download/dotnet/8.0).
-3. Install ViGEmBus from the [official downloads](https://docs.nefarius.at/Downloads/).
-   Reboot if requested. **ViGEmBus is end-of-life**; read the
-   [upstream notice](https://docs.nefarius.at/projects/ViGEm/End-of-Life/).
-   YnyrWASD does not bundle, silently install or update drivers.
-4. Build below, or extract a maintainer-provided release ZIP. Run `YnyrWASD.App.exe`.
-5. Select a profile and start mapping. Stop mapping before editing settings.
-   Driver status is a registry hint; start attempts the actual device connection
-   and reports errors if the driver is unavailable.
+3. Install **ViGEmBus** (required) and **HidHide** (strongly recommended) from the
+   [official Nefarius downloads](https://docs.nefarius.at/Downloads/), then reboot if asked.
+   You do not need to configure HidHide; YnyrWASD does that while it maps.
+4. Download a release ZIP (or build it, see below) and run `YnyrWASD.App.exe`.
+5. Keep **Input = Auto-detect** and **Hide physical controllers while mapping** checked,
+   then click **啟動映射 (Start mapping)**.
+6. If YnyrWASD says Steam was already running, choose **Yes** to restart Steam.
+7. **Then** launch the game.
 
-Only one application instance runs per Windows session. Changes apply to
-the next mapping session; use **Save all** to retain them after exit. The UI is
-currently Traditional Chinese.
+### Why the order matters
 
-### Avoid double input
+HidHide stops programs from *opening* a controller. It does not take a controller away
+from a program that already has it open. Two situations follow from that:
 
-Games may see both the physical and virtual controller. Optional HidHide can hide
-the physical device. Follow the [official setup guide](https://docs.nefarius.at/projects/HidHide/Simple-Setup-Guide/):
-allow `YnyrWASD.App.exe` in Applications, select only the physical controller in
-Devices, then enable hiding. Do not hide the virtual DS4. Moving the app requires
-updating its allowed path. Disable device hiding in HidHide to undo the setup.
+- **The game was already running.** Restart the game after mapping has started.
+- **Steam was already running.** Steam Input keeps forwarding the real controller to Steam
+  games, so prompts alternate between Xbox and PS. Restart Steam once mapping is running;
+  YnyrWASD offers to do this for you. Keep the game's Steam Input setting on *default/enabled*.
+  Games such as *Yakuza 0 Director's Cut* get their PS prompts from Steam Input; with
+  Steam Input disabled they fall back to Xbox prompts.
 
-Steam Input or another mapper may create additional virtual devices or change
-what the game sees. Test with one mapper and review the game's controller settings.
+After you stop mapping, the controller is visible again. Steam may need one more
+restart before it sees the real controller.
+
+## How it works
+
+```
+NS2 Pro (USB HID) ─┐
+                   ├─► YnyrWASD (allowlisted in HidHide) ─► ViGEmBus virtual DS4 ─► game / Steam
+Xbox (XInput)   ───┘
+        ▲
+        └── hidden from every other process by HidHide while mapping
+```
+
+On start, YnyrWASD:
+
+1. records your current HidHide state in `%APPDATA%\YnyrWASD\hidhide-restore.json`;
+2. adds itself to HidHide's application list;
+3. hides NS2 Pro and Xbox gaming HID devices, including ones that are currently turned off;
+4. turns cloaking on.
+
+Every 5 seconds it also hides any newly connected controller. On stop it undoes only what
+it changed. If the app is killed, the next launch restores your settings. YnyrWASD leaves
+HidHide alone when HidHide is in inverse-list mode.
+
+**Known limitation:** wired Xbox controllers that use the XUSB driver are not HID devices,
+so HidHide cannot hide them yet. Bluetooth Xbox controllers and the NS2 Pro are hidden.
+
+## NS2 Pro notes
+
+Supports the Switch 2 Pro Controller (`057E:2069`) over USB. When Steam owns the control
+interface, YnyrWASD reads Steam-initialized HID reports and uses nominal calibration.
+Otherwise it initializes the controller and reads its calibration itself.
+Button layout follows physical position: B→Cross, A→Circle, Y→Square, X→Triangle.
+See [NS2 Pro details](docs/NS2-PRO.md).
 
 ## Build, test and package
 
 Use Windows and .NET SDK 8.0.416 or a newer 8.0 feature band allowed by `global.json`.
-Visual Studio 2022 with the .NET desktop workload is optional.
 
 ```powershell
 dotnet restore YnyrWASD.sln --locked-mode
@@ -70,28 +108,35 @@ dotnet run --project YnyrWASD.App
 pwsh -File scripts/package.ps1
 ```
 
-Packaging produces a framework-dependent Windows x64 ZIP and SHA-256 checksum
-under `artifacts/`. The Desktop Runtime and drivers remain external prerequisites.
-Update lock files intentionally when changing dependencies.
-Tests cover input math, disconnect/error cleanup, profile persistence, native ABI
-layout, XInput loading and WPF bindings/editor commands. They do not establish
-real-controller/game compatibility. See [validation](docs/VALIDATION.md).
+Packaging produces a framework-dependent Windows x64 ZIP and SHA-256 checksum under
+`artifacts/`. The tests cover input math, auto-detect switching, HidHide hide/restore
+logic, error recovery, profile persistence, native layouts and the WPF editor. They do
+not prove compatibility with every controller or game. See [validation](docs/VALIDATION.md).
 
 ## Configuration and troubleshooting
 
-Profiles live in `%APPDATA%\YnyrWASD\profiles.json`. Successful replacement saves
-the previous file as `profiles.json.bak`. Import adds profiles with new IDs;
-export writes the complete current list. Numeric legacy enum values remain readable.
-See [profile format](docs/PROFILES.md) and [troubleshooting](docs/TROUBLESHOOTING.md).
+Profiles live in `%APPDATA%\YnyrWASD\profiles.json`. The previous version is kept as
+`profiles.json.bak`. See [profile format](docs/PROFILES.md) and
+[troubleshooting](docs/TROUBLESHOOTING.md).
 
-Mapping uses no network, telemetry, background service or automatic updater.
-The official download button opens a website in your browser. Settings stay local.
+## Similar projects
 
-## Contributing and releases
+- [DS4Windows](https://github.com/Ryochan7/DS4Windows) works the other way: it makes
+  PlayStation controllers look like Xbox.
+- [Steam Input](https://partner.steamgames.com/doc/features/steam_controller) can remap
+  controllers for Steam games only.
+- [HidHide](https://github.com/nefarius/HidHide) and [ViGEmBus](https://github.com/nefarius/ViGEmBus)
+  are the building blocks YnyrWASD relies on.
+
+## Contributing and license
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
 [release checklist](docs/RELEASING.md) and [roadmap](PLAN.md).
-GitHub workflows test changes and can create a **draft preview release** from
-a matching version tag. Hardware validation is required before claiming a stable release.
 
-Licensed under [MIT](LICENSE). See [third-party notices](THIRD-PARTY-NOTICES.md).
+YnyrWASD is licensed under the [MIT License](LICENSE). The NS2 Pro protocol portions
+adapted from SDL keep their zlib license. Bundled and external components are listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+PlayStation, DualShock, Xbox, Nintendo Switch, Steam and reWASD are trademarks of their
+respective owners. YnyrWASD is an independent project and is not affiliated with or
+endorsed by them.

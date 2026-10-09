@@ -26,6 +26,7 @@ public sealed class MappingSession : IAsyncDisposable
         _statusCallback = statusCallback;
     }
 
+    private static readonly TimeSpan OutputRetryDelay = TimeSpan.FromSeconds(1);
     public bool IsRunning => _loopTask is { IsCompleted: false };
     public string? LastError { get; private set; }
     public string InputSummary => _inputSummary;
@@ -49,16 +50,41 @@ public sealed class MappingSession : IAsyncDisposable
         string? previousStatus = null;
         try
         {
+            // Runs until stopped: input loss sends neutral, driver errors reconnect the virtual pad.
             while (!token.IsCancellationRequested)
             {
-                bool available = _input.TryGetState(out var state);
+                bool available;
+                State state;
+                try { available = _input.TryGetState(out state); }
+                catch (Exception ex)
+                {
+                    LastError = ex.Message;
+                    available = false;
+                    state = default;
+                }
                 _inputSummary = available
                     ? $"按鍵：{state.Gamepad.Buttons} · 左搖桿 ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · 右搖桿 ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}"
                     : "尚未收到有效輸入（輸出歸零）";
-                // Always send neutral input on disconnect; never leave buttons held.
-                _output.PushState(available ? state : default, _profile.DeadZone);
-                string status = available ? $"映射運作中：{_input.Status} → DualShock 4"
-                    : $"等待輸入（輸出已歸零）：{_input.Status}";
+                string status;
+                try
+                {
+                    if (!_output.IsConnected && !_output.TryConnect(out var connectError))
+                        throw new InvalidOperationException(connectError ?? "無法重新建立虛擬手把。");
+                    // Always send neutral input on disconnect; never leave buttons held.
+                    _output.PushState(available ? state : default, _profile.DeadZone);
+                    status = available ? $"映射運作中：{_input.Status} → DualShock 4"
+                        : $"等待輸入（虛擬 DS4 保持連線，輸出已歸零）：{_input.Status}";
+                }
+                catch (Exception ex)
+                {
+                    LastError = ex.Message;
+                    try { _output.Disconnect(); }
+                    catch { /* Reconnect will be attempted on the next pass. */ }
+                    status = $"虛擬 DS4 發生錯誤，稍後自動重新連線：{ex.Message}";
+                    if (previousStatus != status) { previousStatus = status; Report(status); }
+                    await Task.Delay(OutputRetryDelay, token).ConfigureAwait(false);
+                    continue;
+                }
                 if (previousStatus != status)
                 {
                     previousStatus = status;
@@ -68,11 +94,6 @@ public sealed class MappingSession : IAsyncDisposable
             }
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
-        catch (Exception ex)
-        {
-            LastError = ex.Message;
-            Report($"映射發生錯誤：{ex.Message}");
-        }
         finally
         {
             try

@@ -8,7 +8,7 @@ the VID/PID filter, so the mapper does not feed its own output back as input.
 ## 使用方式
 
 1. 接上 NS2 Pro 的 USB 線，開啟 **0.2.0** 或更新版本。
-2. 新增或選擇設定檔，將「輸入手把」改成 **Nintendo Switch 2 Pro（USB）**。
+2. 新增或選擇設定檔，「輸入手把」維持 **自動偵測**（或指定只用 NS2 Pro）。
 3. 按「儲存全部」，再按「啟動映射」。
 4. 底部應顯示「映射運作中：NS2 Pro … → DualShock 4」。
    按鍵及搖桿數字會即時更新。

@@ -45,8 +45,12 @@ SOFTWARE.
   https://github.com/dotnet/runtime and https://github.com/dotnet/wpf.
 - ViGEmBus driver is separately distributed under BSD-3-Clause:
   https://github.com/nefarius/ViGEmBus/blob/master/LICENSE.
-- HidHide is optional, installed separately and not redistributed here:
-  https://github.com/nefarius/HidHide.
+- HidHide (MIT, https://github.com/nefarius/HidHide) is optional, installed separately
+  and not redistributed. While mapping, YnyrWASD runs the user's installed `HidHideCLI.exe`
+  as a separate process to change and later restore its configuration; no HidHide code
+  or binary is included in YnyrWASD.
+- Steam is not bundled or linked. YnyrWASD only starts the user's installed `steam.exe`
+  (with `-shutdown`, then normally) when the user asks it to restart Steam.
 
 ## Development-only packages
 
@@ -55,5 +59,5 @@ they are not included in the application ZIP. Refer to their NuGet metadata and
 upstream repositories for notices. Each project's packages.lock.json records
 versions and integrity hashes.
 
-PlayStation, DualShock, Xbox and reWASD names belong to their respective owners.
+PlayStation, DualShock, Xbox, Nintendo Switch, Steam and reWASD names belong to their respective owners.
 YnyrWASD is an independent project and does not imply endorsement.

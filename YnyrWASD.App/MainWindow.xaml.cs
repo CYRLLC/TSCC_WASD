@@ -35,7 +35,8 @@ public partial class MainWindow : Window
         finally
         {
             _readyToClose = true;
-            Close();
+            // Cleanup may finish synchronously; closing again inside Closing throws.
+            _ = Dispatcher.BeginInvoke(Close);
         }
     }
 }

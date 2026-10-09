@@ -28,6 +28,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         _coordinator = new MappingCoordinator(profileStore);
         StartCommand = Command(StartAsync, () => !IsRunning && SelectedProfile is not null);
         StopCommand = Command(StopAsync, () => IsRunning);
+        RestartSteamCommand = Command(RestartSteamAsync, () => IsRunning);
         ReloadCommand = Command(() => { Reload(); return Task.CompletedTask; }, () => !IsRunning);
         SaveCommand = Command(() => { Save(); return Task.CompletedTask; }, () => !IsRunning && !_loadFailed);
         NewCommand = Command(() =>
@@ -84,6 +85,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             return Task.CompletedTask;
         });
         Reload();
+        if (_coordinator.RecoverHiddenControllers() is { } recovered) StatusMessage = recovered;
         _timer.Tick += OnTick;
         _timer.Start();
     }
@@ -105,8 +107,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public ObservableCollection<MappingProfile> Profiles { get; } = new();
     public IReadOnlyList<InputOption> InputOptions { get; } =
     [
-        new(InputDeviceType.XInput, "Xbox／XInput"),
-        new(InputDeviceType.Switch2ProUsb, "Nintendo Switch 2 Pro（USB）")
+        new(InputDeviceType.Auto, "自動偵測（NS2 Pro／Xbox，建議）"),
+        new(InputDeviceType.XInput, "只用 Xbox／XInput"),
+        new(InputDeviceType.Switch2ProUsb, "只用 Nintendo Switch 2 Pro（USB）")
     ];
     public sealed record InputOption(InputDeviceType Type, string Name);
     public MappingProfile? SelectedProfile
@@ -125,6 +128,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public bool CanEdit => !IsRunning && !_busy && !_closing && !_loadFailed;
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }
+    public ICommand RestartSteamCommand { get; }
     public ICommand ReloadCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand NewCommand { get; }
@@ -169,6 +173,24 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         var result = await _coordinator.StartAsync(SelectedProfile, UpdateStatusFromWorker);
         IsRunning = _coordinator.IsRunning;
         StatusMessage = result.message;
+        if (IsRunning && _coordinator.SteamSeesPhysicalControllers)
+        {
+            var answer = MessageBox.Show(
+                "Steam 在隱藏實體手把之前就已啟動，仍握有實體手把，會透過 Steam Input 轉給遊戲，" +
+                "造成按鍵圖示在 Xbox／PS 之間交替。\n\n" +
+                "要現在重新啟動 Steam 嗎？重啟後 Steam 只會看到虛擬 DS4，Steam 遊戲會顯示 PS 圖示。\n" +
+                "（請先關閉正在執行的 Steam 遊戲；遊戲的 Steam Input 請保持啟用／預設。）",
+                "YnyrWASD", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.Yes) await RestartSteamAsync();
+            else StatusMessage = $"{result.message} Steam 仍看得到實體手把，可稍後按「重新啟動 Steam」。";
+        }
+    }
+
+    private async Task RestartSteamAsync()
+    {
+        StatusMessage = "正在重新啟動 Steam...";
+        await SteamHelper.RestartAsync();
+        StatusMessage = "Steam 已重新啟動，現在只看得到虛擬 DS4。停止映射後，若 Steam 看不到實體手把，再重啟一次 Steam 即可。";
     }
 
     private async Task StopAsync()

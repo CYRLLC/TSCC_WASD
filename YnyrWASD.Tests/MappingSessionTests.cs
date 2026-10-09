@@ -26,17 +26,31 @@ public class MappingSessionTests
     }
 
     [Fact]
-    public async Task DriverFailureEndsLoopAndDisconnects()
+    public async Task DriverFailureReconnectsAndKeepsMapping()
     {
-        var output = new FakeOutput { FailPush = true };
+        var output = new FakeOutput { FailPushes = 1 };
         var input = new FakeInput();
         await using var session = new MappingSession(new MappingProfile(), input, output);
         Assert.True(session.TryStart());
-        await output.Disconnected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await output.Reconnected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(session.IsRunning);
+        Assert.Equal("driver failure", session.LastError);
         await session.StopAsync();
         Assert.False(session.IsRunning);
-        Assert.Equal("driver failure", session.LastError);
+        Assert.False(output.IsConnected);
         Assert.True(input.Disposed);
+    }
+
+    [Fact]
+    public async Task ThrowingInputIsTreatedAsDisconnectedWithoutEndingSession()
+    {
+        var output = new FakeOutput();
+        await using var session = new MappingSession(new MappingProfile(), new ThrowingInput(), output);
+        Assert.True(session.TryStart());
+        await output.Pushed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(session.IsRunning);
+        Assert.Equal("read failure", session.LastError);
+        Assert.Equal(GamepadButtonFlags.None, output.LastState.Gamepad.Buttons);
     }
 
     [Fact]
@@ -80,30 +94,40 @@ public class MappingSessionTests
         public void Dispose() => Disposed = true;
     }
 
+    private sealed class ThrowingInput : IInputReader
+    {
+        public bool TryGetState(out State state) => throw new InvalidOperationException("read failure");
+        public void Dispose() { }
+    }
+
     private sealed class FakeOutput : IVirtualController
     {
         public bool IsConnected { get; private set; }
         public string? LastError => null;
-        public bool FailPush { get; init; }
+        public int FailPushes { get; set; }
+        private int _connects;
         public bool FailConnect { get; init; }
         public int DisposeCount { get; private set; }
         public State LastState { get; private set; }
         private bool _pressed;
         public TaskCompletionSource NeutralAfterPress { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource Disconnected { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Reconnected { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Pushed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public bool TryConnect(out string? error)
         {
             error = FailConnect ? "unavailable" : null;
+            if (!FailConnect && ++_connects > 1) Reconnected.TrySetResult();
             return IsConnected = !FailConnect;
         }
         public void PushState(State state, double deadZone)
         {
-            if (FailPush) throw new InvalidOperationException("driver failure");
+            if (FailPushes > 0) { FailPushes--; throw new InvalidOperationException("driver failure"); }
             LastState = state;
+            Pushed.TrySetResult();
             if (state.Gamepad.Buttons == GamepadButtonFlags.A) _pressed = true;
             if (_pressed && state.Gamepad.Buttons == GamepadButtonFlags.None) NeutralAfterPress.TrySetResult();
         }
-        public void Disconnect() { IsConnected = false; Disconnected.TrySetResult(); }
+        public void Disconnect() => IsConnected = false;
         public void Dispose() { DisposeCount++; Disconnect(); }
     }
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — preview (unreleased)
+
+- Auto-detect input (new default): follows whichever of NS2 Pro USB / XInput is being used.
+- Automatic HidHide isolation while mapping, with exact restore on stop and crash recovery on launch.
+  Fixes button prompts flickering between Xbox and PS when the game also saw the physical controller.
+- Detects Steam started before hiding (Steam Input would still forward the physical controller)
+  and offers to restart Steam so it only sees the virtual DS4.
+- Mapping no longer ends on a transient input or virtual-driver error; the virtual DS4 reconnects.
+- Fixed a crash when closing the main window after cleanup completed synchronously.
+
 ## 0.2.0 — preview (unreleased)
 
 - Added Nintendo Switch 2 Pro USB input selection and HID report decoding.

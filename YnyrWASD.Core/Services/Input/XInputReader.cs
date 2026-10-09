@@ -16,7 +16,8 @@ public sealed class XInputReader : IInputReader
         {
             uint result = XInputGetState(index, out state);
             if (result == 0) return true;
-            if (result != 1167) throw new Win32Exception((int)result);
+            // 1167 = not connected. Other codes are transient driver states; treat the slot as empty
+            // so a long-running mapping keeps going instead of ending on one bad read.
         }
         state = default;
         return false;
