@@ -20,7 +20,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private MappingProfile? _selectedProfile;
     private string _statusMessage = "選擇設定檔後啟動映射。";
     private string _inputSummary = "尚未啟動映射";
-    private bool _isRunning, _busy, _closing, _loadFailed;
+    private bool _isRunning, _busy, _closing, _loadFailed, _steamRestartedWhileHidden;
     private string _dependencyStatus = DependencyChecker.BuildStatusText();
 
     public MainViewModel(ProfileStore? profileStore = null)
@@ -190,7 +190,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     {
         StatusMessage = "正在重新啟動 Steam...";
         await SteamHelper.RestartAsync();
-        StatusMessage = "Steam 已重新啟動，現在只看得到虛擬 DS4。停止映射後，若 Steam 看不到實體手把，再重啟一次 Steam 即可。";
+        _steamRestartedWhileHidden = true;
+        StatusMessage = "Steam 已重新啟動，現在只看得到虛擬 DS4。停止映射或關閉程式時會詢問是否再重啟 Steam。";
     }
 
     private async Task StopAsync()
@@ -198,6 +199,30 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         try { await _coordinator.StopAsync(); }
         finally { IsRunning = false; }
         StatusMessage = "映射已停止。";
+        await OfferSteamRestartAfterHidingAsync();
+    }
+
+    /// <summary>
+    /// A Steam started while controllers were hidden may not notice them once unhidden.
+    /// Call after mapping has stopped; asks at most once per hidden period.
+    /// </summary>
+    public async Task OfferSteamRestartAfterHidingAsync()
+    {
+        if (!_steamRestartedWhileHidden) return;
+        _steamRestartedWhileHidden = false;
+        if (!SteamHelper.IsRunning) return;
+        var answer = MessageBox.Show(
+            "Steam 是在實體手把被隱藏期間重新啟動的，現在可能看不到實體手把。\n\n" +
+            "要再重新啟動 Steam 一次，讓它重新認得實體手把嗎？\n（請先關閉正在執行的 Steam 遊戲。）",
+            "YnyrWASD", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (answer != MessageBoxResult.Yes)
+        {
+            StatusMessage = "映射已停止。之後若 Steam 看不到實體手把，重啟 Steam 或重新連接手把即可。";
+            return;
+        }
+        StatusMessage = "正在重新啟動 Steam...";
+        await SteamHelper.RestartAsync();
+        StatusMessage = "映射已停止，Steam 已重新啟動並可看到實體手把。";
     }
 
     private void OnTick(object? sender, EventArgs e)

@@ -26,6 +26,16 @@ public static class SteamHelper
         return false;
     }
 
+    public static bool IsRunning
+    {
+        get
+        {
+            var processes = Process.GetProcessesByName("steam");
+            foreach (var process in processes) process.Dispose();
+            return processes.Length > 0;
+        }
+    }
+
     public static async Task RestartAsync(CancellationToken token = default)
     {
         string exe = FindSteamExe() ?? throw new FileNotFoundException("找不到 steam.exe。");

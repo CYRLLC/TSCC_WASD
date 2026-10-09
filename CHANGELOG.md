@@ -6,7 +6,8 @@
 - Automatic HidHide isolation while mapping, with exact restore on stop and crash recovery on launch.
   Fixes button prompts flickering between Xbox and PS when the game also saw the physical controller.
 - Detects Steam started before hiding (Steam Input would still forward the physical controller)
-  and offers to restart Steam so it only sees the virtual DS4.
+  and offers to restart Steam so it only sees the virtual DS4. If it did, stopping or
+  closing asks whether to restart Steam again so it sees the physical controller.
 - Mapping no longer ends on a transient input or virtual-driver error; the virtual DS4 reconnects.
 - Fixed a crash when closing the main window after cleanup completed synchronously.
 

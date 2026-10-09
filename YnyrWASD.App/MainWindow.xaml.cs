@@ -27,7 +27,12 @@ public partial class MainWindow : Window
         if (_closing) return;
         _closing = true;
         IsEnabled = false;
-        try { await _viewModel.DisposeAsync(); }
+        try
+        {
+            await _viewModel.DisposeAsync();
+            // Controllers are unhidden now; Steam keeps running either way.
+            await _viewModel.OfferSteamRestartAfterHidingAsync();
+        }
         catch (Exception ex)
         {
             MessageBox.Show(this, ex.Message, "清理控制器時發生錯誤");

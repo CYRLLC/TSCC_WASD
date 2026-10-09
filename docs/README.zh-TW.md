@@ -42,7 +42,9 @@ Steam Input 或其他映射工具也可能影響辨識結果。
 **Steam 是最常見的情況**：Steam 若比映射早開，Steam Input 會繼續轉送實體手把，
 Steam 遊戲的圖示就會在 Xbox／PS 間交替。程式偵測到時會詢問是否重新啟動 Steam
 （也可按「重新啟動 Steam」）。像人中之龍 0 這類靠 Steam Input 決定 PS 圖示的遊戲，
-請讓該遊戲的 Steam Input 保持「預設／啟用」。HidHide 反向清單模式不會被更動。
+請讓該遊戲的 Steam Input 保持「預設／啟用」。
+關閉 YnyrWASD 不會關閉 Steam；若映射期間重啟過 Steam，停止映射或關閉程式時會詢問
+是否再重啟一次，讓 Steam 重新認得實體手把。HidHide 反向清單模式不會被更動。
 使用 XUSB 驅動的有線 Xbox 手把不是 HID 裝置，目前不會被隱藏。
 本工具不會安裝驅動，驅動按鈕只開啟官方下載頁。
 

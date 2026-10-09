@@ -61,8 +61,9 @@ from a program that already has it open. Two situations follow from that:
   Games such as *Yakuza 0 Director's Cut* get their PS prompts from Steam Input; with
   Steam Input disabled they fall back to Xbox prompts.
 
-After you stop mapping, the controller is visible again. Steam may need one more
-restart before it sees the real controller.
+After you stop mapping, the controller is visible again. Closing YnyrWASD never closes
+Steam. If YnyrWASD restarted Steam during the session, it asks on stop or exit whether to
+restart Steam once more so Steam sees the real controller again.
 
 ## How it works
 
