@@ -30,6 +30,20 @@ button input, HidHide setup, game recognition or long-running stability.
 
 ## Manual hardware validation
 
+### 0.4.1 — USB Xbox controller, 2026-10-09
+
+Xbox Wireless Controller over USB (`045E:0B12`, GIP; XInput-compatible HID child `045E:02FF`),
+NS2 Pro on USB, Steam running, zh-TW Windows 11.
+
+| Check | Result |
+| --- | --- |
+| Before the fix: HidHideCLI `--dev-gaming` output truncated at the localized description; hiding failed for all controllers | Reproduced |
+| After: auto mapping hides 4 interfaces (wired Xbox HID + GIP device, NS2 HID, remembered Bluetooth Xbox HID) | Passed |
+| Non-allowlisted process: XInput slot 0 not connected while mapping | Passed |
+| TSCC_WASD itself still reads the hidden wired Xbox via XInput | Passed |
+| Stop restores cloak state, hidden list and app list | Passed |
+| No ViGEm/DS4Windows virtual pad selected for hiding | Passed |
+
 ### 0.4.0 — 2026-10-09
 
 Same machine: Windows 11 26100, .NET 10.0.401 SDK, NS2 Pro on USB (Steam running, shared HID).

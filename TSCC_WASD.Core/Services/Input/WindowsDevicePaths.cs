@@ -28,7 +28,8 @@ internal static class WindowsDevicePaths
         return [];
     }
 
-    // Device setup classes used by wired Xbox controllers (XUSB / GIP); HidHide filters both.
+    // Device setup classes HidHide filters: HID, and those used by wired Xbox controllers (XUSB / GIP).
+    private const string HidClass = "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}";
     private const string XnaCompositeClass = "{d61ca365-5af4-4486-998b-9db4734c6ca3}";
     private const string XboxCompositeClass = "{05f5cfe2-4733-4950-a6bb-07aad01a3a84}";
     private const uint FilterClass = 0x200, LocatePhantom = 1;
@@ -45,14 +46,39 @@ internal static class WindowsDevicePaths
     private static extern uint CM_Get_Device_IDW(uint devInst, [Out] char[] buffer, uint length, uint flags);
 
     /// <summary>
-    /// Physical wired Microsoft controllers (present or remembered). Virtual pads created by ViGEm
-    /// (for example DS4Windows' Xbox 360 output) hang off a root-enumerated bus and are excluded.
+    /// Physical NS2 Pro and Microsoft (Xbox) controller devices, present or remembered, over USB,
+    /// Bluetooth or wired XUSB/GIP. Virtual pads created by ViGEm (for example DS4Windows' Xbox 360
+    /// output) hang off a root-enumerated bus and are excluded. Callers filter by controller type.
     /// </summary>
-    internal static string[] FindWiredXbox() =>
-        [.. ListClass(XnaCompositeClass).Concat(ListClass(XboxCompositeClass))
-            .Where(id => id.Contains("VID_045E", StringComparison.OrdinalIgnoreCase))
-            .Where(id => !(ParentOf(id)?.StartsWith(@"ROOT\", StringComparison.OrdinalIgnoreCase) ?? true))
+    /// <remarks>
+    /// Enumerated here rather than parsed from <c>HidHideCLI --dev-gaming</c>: the CLI stops writing
+    /// mid-JSON when a device description is not ASCII (for example a localized Windows), which once
+    /// left every controller visible.
+    /// </remarks>
+    internal static string[] FindPhysicalControllers() =>
+        // HID: only the HID interfaces themselves (as HidHide lists them), not their USB function nodes.
+        [.. ListClass(HidClass).Where(id => id.StartsWith(@"HID\", StringComparison.OrdinalIgnoreCase))
+            .Concat(ListClass(XnaCompositeClass)).Concat(ListClass(XboxCompositeClass))
+            .Where(id => id.Contains("VID_057E&PID_2069", StringComparison.OrdinalIgnoreCase)
+                || id.Contains("VID_045E", StringComparison.OrdinalIgnoreCase))
+            .Where(id => !IsVirtual(id))
             .Distinct(StringComparer.OrdinalIgnoreCase)];
+
+    /// <summary>
+    /// ViGEm pads sit directly on a root-enumerated bus (ROOT\SYSTEM\xxxx); their HID children sit one
+    /// level lower. Physical controllers reach a USB root hub or Bluetooth stack within that distance.
+    /// Unknown parents count as virtual so nothing questionable is hidden.
+    /// </summary>
+    private static bool IsVirtual(string deviceId)
+    {
+        string? current = deviceId;
+        for (int level = 0; level < 2; level++)
+        {
+            current = ParentOf(current);
+            if (current is null || current.StartsWith(@"ROOT\", StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
 
     private static IEnumerable<string> ListClass(string classGuid)
     {

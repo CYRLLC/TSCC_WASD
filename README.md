@@ -110,8 +110,8 @@ Every 5 seconds it also hides any newly connected controller. On stop it undoes 
 it changed. If the app is killed, the next launch restores your settings. TSCC_WASD leaves
 HidHide alone when HidHide is in inverse-list mode.
 
-Bluetooth Xbox and NS2 Pro hiding is verified on hardware; wired Xbox hiding is
-implemented and unit-tested but not yet verified with a wired controller.
+Hiding is verified on hardware for the NS2 Pro and for an Xbox controller over both
+Bluetooth and USB.
 
 Rumble the game sends to the virtual DS4 goes to whichever controller is active. The
 virtual DS4 is fed full raw reports, so it can carry the PS button, touchpad click and

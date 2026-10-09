@@ -70,6 +70,18 @@ public class HidHideGuardTests
     }
 
     [Fact]
+    public void TruncatedCliDeviceListStillHidesEnumeratedControllers()
+    {
+        // HidHideCLI stops mid-JSON at the first non-ASCII description (e.g. "XINPUT 相容 HID 裝置").
+        // That used to throw and leave every controller visible.
+        const string truncated = "[ { \"friendlyName\" : \"x\" , \"devices\" : [\n{ \"present\" : true ,\n\"description\" : \"XINPUT ";
+        var cli = new FakeCli { Gaming = truncated };
+        var guard = new HidHideGuard(cli.Run, TempRecord(), () => [Ns2, Xbox]);
+        Assert.Contains("2", guard.Hide(App, InputDeviceType.Auto));
+        Assert.Equal(["--app-reg", App, "--dev-hide", Ns2, "--dev-hide", Xbox, "--cloak-on"], cli.Changes.Single());
+    }
+
+    [Fact]
     public void InverseModeIsLeftAlone()
     {
         var cli = new FakeCli { Gaming = Gaming(Ns2), Inverse = true };

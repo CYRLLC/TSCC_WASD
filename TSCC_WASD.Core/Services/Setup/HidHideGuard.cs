@@ -21,7 +21,10 @@ public sealed partial class HidHideGuard
     private readonly string _recordPath;
     private readonly object _gate = new();
 
-    /// <param name="extraDevices">Non-HID controllers HidHide can also hide (wired Xbox), which --dev-gaming omits.</param>
+    /// <param name="extraDevices">
+    /// Controller device paths found by Windows enumeration. They are the primary source; the CLI's
+    /// --dev-gaming list only supplements them because it can be truncated (see WindowsDevicePaths).
+    /// </param>
     public HidHideGuard(Func<IReadOnlyList<string>, string> run, string? recordPath = null,
         Func<IEnumerable<string>>? extraDevices = null)
     {
@@ -34,7 +37,7 @@ public sealed partial class HidHideGuard
     public static HidHideGuard? TryCreate()
     {
         string? cli = FindCli();
-        return cli is null ? null : new HidHideGuard(args => RunCli(cli, args), extraDevices: WiredXbox);
+        return cli is null ? null : new HidHideGuard(args => RunCli(cli, args), extraDevices: PhysicalControllers);
     }
 
     public bool HasPendingRestore => File.Exists(_recordPath);
@@ -59,7 +62,7 @@ public sealed partial class HidHideGuard
             };
             var alreadyHidden = ParseQuoted(_run(["--dev-list"]), "--dev-hide").ToHashSet(StringComparer.OrdinalIgnoreCase);
             alreadyHidden.UnionWith(record.Devices);
-            var targets = ParseGamingDevices(_run(["--dev-gaming"])).Concat(_extraDevices())
+            var targets = GamingDevicesFromCli().Concat(_extraDevices())
                 .Where(path => Matches(path, inputType) && !alreadyHidden.Contains(path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -146,10 +149,16 @@ public sealed partial class HidHideGuard
         File.WriteAllText(_recordPath, JsonSerializer.Serialize(record, JsonOptions));
     }
 
-    private static IEnumerable<string> WiredXbox()
+    private IEnumerable<string> GamingDevicesFromCli()
     {
-        try { return Input.WindowsDevicePaths.FindWiredXbox(); }
-        catch { return []; } // Enumeration problems must not block HID hiding.
+        try { return ParseGamingDevices(_run(["--dev-gaming"])).ToList(); }
+        catch (JsonException) { return []; } // Truncated output; Windows enumeration still covers the devices.
+    }
+
+    private static IEnumerable<string> PhysicalControllers()
+    {
+        try { return Input.WindowsDevicePaths.FindPhysicalControllers(); }
+        catch { return []; } // Enumeration problems must not block hiding what the CLI reports.
     }
 
     private static string? FindCli()

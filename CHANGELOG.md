@@ -7,6 +7,10 @@
 - Existing data in `%APPDATA%\YnyrWASD` moves to `%APPDATA%\TSCC_WASD` on first launch, the
   "start with Windows" entry is re-registered under the new name, and an old YnyrWASD that is
   still running is detected so the two never map at the same time.
+- Fixed: on a Chinese (or other non-English) Windows, a USB-connected Xbox controller made
+  HidHideCLI's device list stop mid-output, so **no** controller was hidden. Controllers are now
+  found through Windows device enumeration; the CLI list only supplements it. Verified with a
+  USB Xbox Wireless Controller: hidden from games, still read by TSCC_WASD, restored on stop.
 
 ## 0.4.0 — preview
 
