@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 — preview
+
+- **Choose your prompts:** each profile can output a virtual **Xbox 360** controller instead of
+  the DualShock 4, for example to get Xbox prompts from an NS2 Pro. Switching applies while
+  mapping. TSCC_WASD never reads its own virtual Xbox pad back as input.
+- **Swap A/B and X/Y** per profile, for Nintendo habits (the right-hand button confirms); the NS2
+  Pro then follows the letters printed on its buttons.
+- **Anti-cheat warning:** while mapping, if EA's anti-cheat (Javelin, used by Battlefield 6 and
+  2042, reported to reject virtual controllers) is running, TSCC_WASD says so in the window and
+  in a notification, and suggests stopping mapping for those games.
+
 ## 0.7.1 — preview
 
 - Fixed: an Xbox controller could not press the DS4 touchpad, because View (Back) was sent as

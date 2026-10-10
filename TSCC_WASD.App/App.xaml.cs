@@ -63,6 +63,7 @@ public partial class App : Application
         var window = new MainWindow(viewModel);
         MainWindow = window;
         _tray = new TrayIcon(viewModel, () => window.ShowFromTray(), () => window.Close());
+        viewModel.BackgroundNotice += message => _tray?.ShowBalloon(message, warning: true);
 
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
         _showWait = ThreadPool.RegisterWaitForSingleObject(_showEvent,

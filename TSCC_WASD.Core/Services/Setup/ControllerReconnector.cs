@@ -42,7 +42,12 @@ public static class ControllerReconnector
     public static bool IsInstalled => File.Exists(HelperExe) && SameBuild(HelperExe, Environment.ProcessPath) && TaskExists();
 
     /// <summary>Set up for an older or newer TSCC_WASD; needs one more administrator prompt to update.</summary>
-    public static bool NeedsUpdate => File.Exists(HelperExe) && !IsInstalled;
+    public static bool NeedsUpdate =>
+        File.Exists(HelperExe) && IsTsccWasd(Environment.ProcessPath) && !IsInstalled;
+
+    /// <summary>Only TSCC_WASD itself can be compared with the helper copy (not a test host).</summary>
+    private static bool IsTsccWasd(string? path) =>
+        string.Equals(Path.GetFileName(path), "TSCC_WASD.exe", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Cheap check (no Task Scheduler query), used to enable the Remove button.</summary>
     public static bool IsPresent => Directory.Exists(HelperDirectory);

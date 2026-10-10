@@ -8,9 +8,24 @@ public interface IXboxBackButtonOption
     bool BackAsTouchpad { get; set; }
 }
 
-/// <summary>Reads the first available XInput slot (0–3) using the Windows inbox API.</summary>
-public sealed class XInputReader : IInputReader, IRumbleTarget, IXboxBackButtonOption
+/// <summary>Readers that must skip the XInput slot of TSCC_WASD's own virtual Xbox 360 pad.</summary>
+public interface IXInputSlotFilter
 {
+    int? ExcludedSlot { get; set; }
+}
+
+/// <summary>Reads the first available XInput slot (0–3) using the Windows inbox API.</summary>
+public sealed class XInputReader : IInputReader, IRumbleTarget, IXboxBackButtonOption, IXInputSlotFilter
+{
+    private volatile int _excludedSlot = -1;
+
+    /// <summary>Never read our own virtual Xbox 360 output back as input.</summary>
+    public int? ExcludedSlot
+    {
+        get => _excludedSlot < 0 ? null : _excludedSlot;
+        set => _excludedSlot = value ?? -1;
+    }
+
     private volatile bool _backAsTouchpad = true;
 
     /// <summary>
@@ -52,6 +67,7 @@ public sealed class XInputReader : IInputReader, IRumbleTarget, IXboxBackButtonO
     {
         for (uint index = 0; index < 4; index++)
         {
+            if (index == _excludedSlot) continue;
             uint result = GetState(index, out state);
             if (result == 0)
             {

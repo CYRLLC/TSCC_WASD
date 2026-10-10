@@ -184,6 +184,15 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         new(InputDeviceType.Switch2ProUsb, L.T("只用 Nintendo Switch 2 Pro（USB）", "Nintendo Switch 2 Pro (USB) only"))
     ];
     public sealed record InputOption(InputDeviceType Type, string Name);
+    public IReadOnlyList<OutputOption> OutputOptions { get; } =
+    [
+        new(OutputControllerType.DualShock4, L.T("DualShock 4（PS 按鍵圖示）", "DualShock 4 (PlayStation prompts)")),
+        new(OutputControllerType.Xbox360, L.T("Xbox 360（Xbox 按鍵圖示）", "Xbox 360 (Xbox prompts)"))
+    ];
+    public sealed record OutputOption(OutputControllerType Type, string Name);
+
+    /// <summary>Messages worth a notification while the window may be hidden behind a game.</summary>
+    public event Action<string>? BackgroundNotice;
     public IReadOnlyList<LanguageOption> LanguageOptions { get; } =
     [
         new("auto", L.T("跟隨 Windows", "Follow Windows")),
@@ -655,6 +664,22 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         if (IsRunning && !running)
             StatusMessage = L.T($"映射已結束：{_coordinator.LastError ?? "已停止"}", $"Mapping ended: {_coordinator.LastError ?? "stopped"}");
         IsRunning = running;
+        if (running && ++_antiCheatTicks % 20 == 0) CheckAntiCheat(); // Every 5 seconds.
+        if (!running) _antiCheatWarned = null;
+    }
+
+    private int _antiCheatTicks;
+    private string? _antiCheatWarned;
+
+    /// <summary>Warns once per mapping session when an anti-cheat known to reject virtual pads starts.</summary>
+    private void CheckAntiCheat()
+    {
+        var found = AntiCheatWatcher.FindRunning();
+        if (found is null || found.ProcessName == _antiCheatWarned) return;
+        _antiCheatWarned = found.ProcessName;
+        string message = L.T(found.AdviceZh, found.AdviceEn);
+        StatusMessage = message;
+        BackgroundNotice?.Invoke(message);
     }
 
     private void UpdateStatusFromWorker(string message)

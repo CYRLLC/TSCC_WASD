@@ -87,6 +87,16 @@
                             <ComboBox ItemsSource="{Binding InputOptions}" DisplayMemberPath="Name" SelectedValuePath="Type"
                                       SelectedValue="{Binding SelectedProfile.InputType, UpdateSourceTrigger=PropertyChanged}"
                                       AutomationProperties.Name="{app:T Zh=輸入手把, En='Input controller'}"/>
+                            <TextBlock Style="{StaticResource Label}" Text="{app:T Zh=輸出成, En='Output as'}"/>
+                            <ComboBox ItemsSource="{Binding OutputOptions}" DisplayMemberPath="Name" SelectedValuePath="Type"
+                                      SelectedValue="{Binding SelectedProfile.OutputType, UpdateSourceTrigger=PropertyChanged}"
+                                      AutomationProperties.Name="{app:T Zh=輸出成, En='Output as'}"/>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="{app:T Zh='遊戲顯示哪種按鍵圖示取決於它看到的手把。Xbox 360 相容性最好；DualShock 4 才有 PS 圖示、PS 鍵、觸控板與體感。映射中切換會立即生效。', En='Games pick prompts from the controller they see. Xbox 360 is the most compatible; only DualShock 4 gives PS prompts, the PS button, touchpad and motion. Switching applies right away while mapping.'}"/>
+                            <CheckBox IsChecked="{Binding SelectedProfile.SwapFaceButtons}"
+                                      Content="{app:T Zh='對調 A/B 與 X/Y（任天堂習慣：右邊的鍵是確認）', En='Swap A/B and X/Y (Nintendo habit: the right-hand button confirms)'}"/>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="{app:T Zh='勾選後右側鍵送出 ✕／Xbox A、下方鍵送出 ○／Xbox B。NS2 Pro 也會改成依按鍵上的字母對應，而不是位置。', En='The right-hand button then sends Cross / Xbox A and the bottom one Circle / Xbox B. The NS2 Pro then follows the letters printed on its buttons instead of their positions.'}"/>
                             <CheckBox IsChecked="{Binding SelectedProfile.HidePhysicalControllers}"
                                       Content="{app:T Zh='映射時自動隱藏實體手把（需 HidHide）', En='Hide physical controllers while mapping (needs HidHide)'}"/>
                             <TextBlock Style="{StaticResource Hint}"

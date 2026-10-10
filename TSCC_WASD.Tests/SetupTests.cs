@@ -133,4 +133,14 @@ public class SetupTests
         Assert.Null(ControllerReconnector.TryRunCommand(["--startup"]));
         Assert.Null(ControllerReconnector.TryRunCommand([ControllerReconnector.InstallArgument])); // Needs the user name.
     }
+
+    [Fact]
+    public void AntiCheatWarningOnlyForKnownBlockers()
+    {
+        Assert.Null(AntiCheatWatcher.FindRunning(_ => false));
+        var ea = AntiCheatWatcher.FindRunning(name => name == "EAAntiCheat.GameService");
+        Assert.NotNull(ea);
+        Assert.Contains("Stop", ea.AdviceEn);
+        Assert.Null(AntiCheatWatcher.FindRunning(name => name == "EasyAntiCheat")); // Accepts virtual pads.
+    }
 }

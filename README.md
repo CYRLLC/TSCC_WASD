@@ -5,7 +5,7 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.7.1 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.8.0 preview.** English and Traditional Chinese UI.
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
@@ -39,6 +39,10 @@ details and app settings sit in collapsible sections (shown expanded
 - **Change settings without stopping.** Edits and profile switches apply while mapping, and
   **Pause** gives games a neutral DS4 while the real controllers stay hidden, so nothing has to
   be re-detected. **Stop** still releases everything.
+- **Your choice of prompts.** Each profile outputs a virtual **DualShock 4** (PS prompts) or
+  **Xbox 360** (Xbox prompts, the most compatible), and can **swap A/B and X/Y** for Nintendo
+  habits. A warning appears when an anti-cheat known to reject virtual controllers (EA Javelin)
+  is running.
 - **Rumble, PS button and motion.** Game rumble is forwarded to the Xbox or NS2 Pro. The Xbox
   Guide and NS2 Home buttons act as the PS button; Xbox View (or Share, if you prefer) and NS2
   Capture act as the touchpad click. The NS2
@@ -64,7 +68,7 @@ through Steam Input. Games that only draw Xbox artwork will keep showing it.
 
 ### Not implemented (yet)
 
-Arbitrary remapping, macros, touchpad surface, keyboard/mouse input, DualSense output,
+Arbitrary remapping, macros, touchpad surface, keyboard/mouse input, DualSense output and input,
 per-game profile switching and overlays. NS2 Pro works over USB only; its C and GL/GR buttons
 are not mapped. See the [roadmap](PLAN.md).
 

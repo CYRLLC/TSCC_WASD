@@ -12,6 +12,8 @@
 | Duplicate presses / prompts flicker Xbox↔PS | Install HidHide and keep "hide physical controllers while mapping" on; start mapping before the game; restart Steam if it started first (TSCC_WASD offers this); stop other mappers |
 | Steam still sees the real controller after automatic reconnect | Bluetooth controllers can't be cycled: turn the controller off and on. On a USB hub that refuses port cycling, replug the cable or click **Restart Steam** |
 | Automatic reconnect needs setting up again | TSCC_WASD was updated; the helper copy must match the running version. Click **App settings → Set up automatic reconnect** once |
+| A game refuses to start or kicks you while mapping (TSCC_WASD warns about EA Javelin) | Some anti-cheat rejects virtual controllers: click **Stop**, close TSCC_WASD and play that game with the physical controller or Steam Input |
+| Want Xbox prompts instead | Set **Output as → Xbox 360** in the profile; it applies while mapping |
 | Still seeing Xbox icons | Confirm native DS4/game artwork support and review Steam Input settings |
 | Settings fail to load | Preserve broken JSON, restore `.bak` or fix validation errors, then reload |
 | Settings lost after exit | Save all before closing; edits and imports are not auto-saved |

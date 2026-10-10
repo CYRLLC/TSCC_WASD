@@ -29,6 +29,21 @@ public sealed class MappingSession : IAsyncDisposable
         ApplyInputOptions(_profile);
     }
 
+    public static string OutputName(OutputControllerType type) =>
+        type == OutputControllerType.Xbox360 ? "Xbox 360" : "DualShock 4";
+
+    /// <summary>A↔B and X↔Y: the right-hand button becomes confirm (Cross / Xbox A).</summary>
+    public static GamepadButtonFlags SwapFaceButtons(GamepadButtonFlags buttons)
+    {
+        const GamepadButtonFlags face = GamepadButtonFlags.A | GamepadButtonFlags.B | GamepadButtonFlags.X | GamepadButtonFlags.Y;
+        var result = buttons & ~face;
+        if (buttons.HasFlag(GamepadButtonFlags.A)) result |= GamepadButtonFlags.B;
+        if (buttons.HasFlag(GamepadButtonFlags.B)) result |= GamepadButtonFlags.A;
+        if (buttons.HasFlag(GamepadButtonFlags.X)) result |= GamepadButtonFlags.Y;
+        if (buttons.HasFlag(GamepadButtonFlags.Y)) result |= GamepadButtonFlags.X;
+        return result;
+    }
+
     private void ApplyInputOptions(MappingProfile profile)
     {
         if (_input is IXboxBackButtonOption option) option.BackAsTouchpad = profile.XboxBackAsTouchpad;
@@ -101,6 +116,8 @@ public sealed class MappingSession : IAsyncDisposable
             {
                 bool available;
                 State state;
+                if (_output is IXInputSlotOwner owner && _input is IXInputSlotFilter filter)
+                    filter.ExcludedSlot = owner.XInputSlot;
                 try { available = _input.TryGetState(out state); }
                 catch (Exception ex)
                 {
@@ -110,7 +127,7 @@ public sealed class MappingSession : IAsyncDisposable
                 }
                 bool paused = _paused;
                 _inputSummary = paused
-                    ? L.T("已暫停：遊戲收到的是放開所有按鍵的虛擬 DS4", "Paused: games see a virtual DS4 with nothing pressed")
+                    ? L.T("已暫停：遊戲收到的是放開所有按鍵的虛擬手把", "Paused: games see a virtual controller with nothing pressed")
                     : available
                     ? L.T($"按鍵：{state.Gamepad.Buttons} · 左搖桿 ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · 右搖桿 ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}",
                         $"Buttons: {state.Gamepad.Buttons} · Left stick ({state.Gamepad.LeftThumbX}, {state.Gamepad.LeftThumbY}) · Right stick ({state.Gamepad.RightThumbX}, {state.Gamepad.RightThumbY}) · L2/R2 {state.Gamepad.LeftTrigger}/{state.Gamepad.RightTrigger}")
@@ -122,20 +139,22 @@ public sealed class MappingSession : IAsyncDisposable
                         throw new InvalidOperationException(connectError ?? L.T("無法重新建立虛擬手把。", "Could not recreate the virtual controller."));
                     // Always send neutral input on disconnect; never leave buttons held.
                     if (paused) available = false;
+                    if (available && _profile.SwapFaceButtons) state.Gamepad.Buttons = SwapFaceButtons(state.Gamepad.Buttons);
                     MotionSample? motion = available && _input is IMotionSource source && source.TryGetMotion(out var sample)
                         ? sample : null;
                     _output.PushState(available ? state : default, _profile.DeadZone, motion);
+                    string pad = OutputName(_profile.OutputType);
                     status = paused
-                        ? L.T("映射已暫停（虛擬 DS4 保持連線，實體手把仍隱藏）。", "Mapping paused (virtual DS4 stays connected, physical controllers stay hidden).")
-                        : available ? L.T($"映射運作中：{_input.Status} → DualShock 4", $"Mapping: {_input.Status} → DualShock 4")
-                        : L.T($"等待輸入（虛擬 DS4 保持連線，輸出已歸零）：{_input.Status}", $"Waiting for input (virtual DS4 stays connected, output neutral): {_input.Status}");
+                        ? L.T($"映射已暫停（虛擬 {pad} 保持連線，實體手把仍隱藏）。", $"Mapping paused (virtual {pad} stays connected, physical controllers stay hidden).")
+                        : available ? L.T($"映射運作中：{_input.Status} → {pad}", $"Mapping: {_input.Status} → {pad}")
+                        : L.T($"等待輸入（虛擬 {pad} 保持連線，輸出已歸零）：{_input.Status}", $"Waiting for input (virtual {pad} stays connected, output neutral): {_input.Status}");
                 }
                 catch (Exception ex)
                 {
                     LastError = ex.Message;
                     try { _output.Disconnect(); }
                     catch { /* Reconnect will be attempted on the next pass. */ }
-                    status = L.T($"虛擬 DS4 發生錯誤，稍後自動重新連線：{ex.Message}", $"Virtual DS4 error, reconnecting shortly: {ex.Message}");
+                    status = L.T($"虛擬手把發生錯誤，稍後自動重新連線：{ex.Message}", $"Virtual controller error, reconnecting shortly: {ex.Message}");
                     if (previousStatus != status) { previousStatus = status; Report(status); }
                     await Task.Delay(OutputRetryDelay, token).ConfigureAwait(false);
                     continue;

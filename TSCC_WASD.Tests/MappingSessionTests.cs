@@ -77,7 +77,6 @@ public class MappingSessionTests
 
     [Theory]
     [InlineData(OutputControllerType.DualSense)]
-    [InlineData(OutputControllerType.Xbox360)]
     [InlineData((OutputControllerType)99)]
     public void UnsupportedOutputFailsExplicitly(OutputControllerType type)
         => Assert.Throws<NotSupportedException>(() => VirtualControllerFactory.Create(type));
@@ -189,6 +188,72 @@ public class MappingSessionTests
         public bool BackAsTouchpad { get; set; }
         public bool TryGetState(out State state) { state = default; return false; }
         public void Dispose() { }
+    }
+
+    [Fact]
+    public void Xbox360OutputKeepsXInputButtonsAndMapsTouchpadToBack()
+    {
+        var pressed = GamepadButtonFlags.A | GamepadButtonFlags.Guide | GamepadButtonFlags.DPadUp;
+        Assert.Equal((ushort)pressed, Xbox360Report.Buttons(pressed));
+        Assert.Equal((ushort)(GamepadButtonFlags.Back | GamepadButtonFlags.Y),
+            Xbox360Report.Buttons(GamepadButtonFlags.Touchpad | GamepadButtonFlags.Y));
+        Assert.Equal((short)0, Xbox360Report.Axis(1000, 0.1));
+        Assert.Equal(short.MaxValue, Xbox360Report.Axis(short.MaxValue, 0.1));
+        Assert.Equal(short.MinValue, Xbox360Report.Axis(short.MinValue, 0.1));
+        Assert.True(Xbox360Report.Axis(20000, 0.1) is > 0 and < 20000); // Rescaled past the dead zone.
+        new MappingProfile { OutputType = OutputControllerType.Xbox360 }.Validate();
+    }
+
+    [Fact]
+    public void SwappingFaceButtonsExchangesAWithBAndXWithY()
+    {
+        Assert.Equal(GamepadButtonFlags.B | GamepadButtonFlags.Start,
+            MappingSession.SwapFaceButtons(GamepadButtonFlags.A | GamepadButtonFlags.Start));
+        Assert.Equal(GamepadButtonFlags.A | GamepadButtonFlags.X,
+            MappingSession.SwapFaceButtons(GamepadButtonFlags.B | GamepadButtonFlags.Y));
+        Assert.False(new MappingProfile().SwapFaceButtons);
+    }
+
+    [Fact]
+    public async Task SwapAppliesToWhatTheVirtualPadReceives()
+    {
+        var output = new FakeOutput();
+        await using var session = new MappingSession(new MappingProfile { SwapFaceButtons = true },
+            new RumbleInput { Held = GamepadButtonFlags.A }, output);
+        Assert.True(session.TryStart());
+        await WaitUntil(() => output.LastState.Gamepad.Buttons == GamepadButtonFlags.B);
+    }
+
+    [Fact]
+    public async Task OwnVirtualXboxSlotIsNeverReadBack()
+    {
+        var input = new SlotInput();
+        var output = new SlotOutput { Slot = 2 };
+        await using var session = new MappingSession(new MappingProfile { OutputType = OutputControllerType.Xbox360 }, input, output);
+        Assert.True(session.TryStart());
+        await WaitUntil(() => input.ExcludedSlot == 2);
+    }
+
+    private sealed class SlotInput : IInputReader, IXInputSlotFilter
+    {
+        public int? ExcludedSlot { get; set; }
+        public bool TryGetState(out State state) { state = default; return true; }
+        public void Dispose() { }
+    }
+
+    private sealed class SlotOutput : IVirtualController, IXInputSlotOwner
+    {
+        public int? Slot { get; init; }
+        public int? XInputSlot => Slot;
+        public bool IsConnected { get; private set; }
+        public string? LastError => null;
+#pragma warning disable CS0067 // Not raised in this test.
+        public event Action<byte, byte>? RumbleRequested;
+#pragma warning restore CS0067
+        public bool TryConnect(out string? error) { error = null; return IsConnected = true; }
+        public void PushState(State state, double deadZone, MotionSample? motion = null) { }
+        public void Disconnect() => IsConnected = false;
+        public void Dispose() => Disconnect();
     }
 
     private static async Task WaitUntil(Func<bool> condition)

@@ -15,6 +15,8 @@ public class MappingProfile : INotifyPropertyChanged
     private bool _hidePhysicalControllers = true;
     private bool _forwardRumble = true;
     private bool _xboxBackAsTouchpad = true;
+    private bool _swapFaceButtons;
+    private OutputControllerType _outputType = OutputControllerType.DualShock4;
 
     private void Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
     {
@@ -27,7 +29,14 @@ public class MappingProfile : INotifyPropertyChanged
     public string? Description { get => _description; set => Set(ref _description, value); }
 
     public InputDeviceType InputType { get => _inputType; set => Set(ref _inputType, value); }
-    public OutputControllerType OutputType { get; set; } = OutputControllerType.DualShock4;
+    /// <summary>虛擬手把類型：DualShock 4（PS 圖示）或 Xbox 360（Xbox 圖示）。</summary>
+    public OutputControllerType OutputType { get => _outputType; set => Set(ref _outputType, value); }
+
+    /// <summary>
+    /// 對調 A/B 與 X/Y：右側的鍵變成確認（✕／Xbox A）。給習慣任天堂配置的人，
+    /// 也讓 NS2 Pro 依按鍵上的字母而不是位置對應。
+    /// </summary>
+    public bool SwapFaceButtons { get => _swapFaceButtons; set => Set(ref _swapFaceButtons, value); }
 
     /// <summary>映射期間以 HidHide 隱藏實體手把，讓遊戲只看到虛擬 DS4。</summary>
     public bool HidePhysicalControllers { get => _hidePhysicalControllers; set => Set(ref _hidePhysicalControllers, value); }
@@ -63,8 +72,9 @@ public class MappingProfile : INotifyPropertyChanged
     {
         if (string.IsNullOrWhiteSpace(Id) || string.IsNullOrWhiteSpace(Name) || Name.Length > 100)
             throw new ArgumentException(L.T("設定檔需要 ID 與名稱（名稱最多 100 字）。", "A profile needs an ID and a name (up to 100 characters)."));
-        if (InputType is not (InputDeviceType.Auto or InputDeviceType.XInput or InputDeviceType.Switch2ProUsb) || OutputType != OutputControllerType.DualShock4)
-            throw new ArgumentException(L.T("目前支援自動偵測／XInput／NS2 Pro USB → DualShock4。", "Supported: auto-detect / XInput / NS2 Pro USB → DualShock 4."));
+        if (InputType is not (InputDeviceType.Auto or InputDeviceType.XInput or InputDeviceType.Switch2ProUsb)
+            || OutputType is not (OutputControllerType.DualShock4 or OutputControllerType.Xbox360))
+            throw new ArgumentException(L.T("目前支援自動偵測／XInput／NS2 Pro USB → DualShock 4 或 Xbox 360。", "Supported: auto-detect / XInput / NS2 Pro USB → DualShock 4 or Xbox 360."));
         if (PollingRateHz < 30 || PollingRateHz > 500)
             throw new ArgumentException(L.T("輪詢頻率必須介於 30–500 Hz。", "Polling rate must be 30–500 Hz."));
         if (!double.IsFinite(DeadZone) || DeadZone < 0 || DeadZone > 0.95)
@@ -78,7 +88,7 @@ public class MappingProfile : INotifyPropertyChanged
         {
             Id = Id, Name = Name, Description = Description,
             InputType = InputType, OutputType = OutputType, HidePhysicalControllers = HidePhysicalControllers, ForwardRumble = ForwardRumble,
-            XboxBackAsTouchpad = XboxBackAsTouchpad,
+            XboxBackAsTouchpad = XboxBackAsTouchpad, SwapFaceButtons = SwapFaceButtons,
             PollingRateHz = PollingRateHz, DeadZone = DeadZone,
             MatchProcessName = MatchProcessName, RequireDrivers = RequireDrivers,
             Advanced = Advanced is null ? new() : new(Advanced)

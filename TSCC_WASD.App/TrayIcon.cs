@@ -93,7 +93,8 @@ public sealed class TrayIcon : IDisposable
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool DestroyIcon(IntPtr handle);
 
-    public void ShowBalloon(string text) => _icon.ShowBalloonTip(3000, "TSCC_WASD", text, Forms.ToolTipIcon.Info);
+    public void ShowBalloon(string text, bool warning = false) =>
+        _icon.ShowBalloonTip(warning ? 10000 : 3000, "TSCC_WASD", text, warning ? Forms.ToolTipIcon.Warning : Forms.ToolTipIcon.Info);
 
     public void Dispose()
     {

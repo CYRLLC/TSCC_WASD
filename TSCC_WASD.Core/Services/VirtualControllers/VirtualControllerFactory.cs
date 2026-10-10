@@ -8,6 +8,7 @@ public static class VirtualControllerFactory
         type switch
         {
             OutputControllerType.DualShock4 => new DualShock4VirtualPad(),
-            _ => throw new NotSupportedException($"Unsupported output controller: {type}. Only DualShock4 is supported.")
+            OutputControllerType.Xbox360 => new Xbox360VirtualPad(),
+            _ => throw new NotSupportedException($"Unsupported output controller: {type}. Supported: DualShock 4, Xbox 360.")
         };
 }
