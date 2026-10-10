@@ -5,7 +5,7 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.8.0 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.9.0 preview.** English and Traditional Chinese UI.
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
@@ -23,9 +23,10 @@ details and app settings sit in collapsible sections (shown expanded
 
 ## Features
 
-- **Auto-detect input (default).** Watches a USB Nintendo Switch 2 Pro and Xbox/XInput
-  controllers together and follows whichever one you press. An idle controller never
-  takes over. Single-device modes are still available.
+- **Auto-detect input (default).** Watches a USB Nintendo Switch 2 Pro, Xbox/XInput and
+  (experimental) DualShock 4, DualSense and original Switch Pro controllers together and follows
+  whichever one you press. An idle controller never takes over. Single-device modes are still
+  available. The experimental ones are not yet confirmed on hardware; reports are welcome.
 - **One persistent virtual DS4.** It stays connected for the whole session. If the
   controller drops, it sends neutral input; if the driver errors, it reconnects.
 - **Automatic physical-controller hiding.** When HidHide is installed, starting a mapping

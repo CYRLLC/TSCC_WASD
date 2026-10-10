@@ -31,6 +31,13 @@ button input, HidHide setup, game recognition or long-running stability.
 
 ## Manual hardware validation
 
+### 0.9.0 — experimental controllers, 2026-10-10
+
+DualShock 4, DualSense and the original Switch Pro Controller are **not yet tested on hardware**
+(the maintainer has none). Verified so far: report parsing and rumble/CRC building with sample
+reports (unit tests); on a machine with no such controller the readers report "waiting" and dispose
+cleanly; TSCC_WASD's own virtual DualShock 4 is no longer picked up as a DualShock 4 input.
+
 ### 0.7.0 — automatic reconnect, 2026-10-10
 
 Windows 11 26100 (zh-TW), NS2 Pro on USB (root hub port 2), Steam running before mapping,

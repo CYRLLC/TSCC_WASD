@@ -86,6 +86,8 @@ public sealed class MappingCoordinator : IAsyncDisposable
             {
                 InputDeviceType.Switch2ProUsb => new Switch2InputReader(),
                 InputDeviceType.XInput => new XInputReader(),
+                InputDeviceType.PlayStation => new PlayStationInputReader(),
+                InputDeviceType.SwitchPro => new SwitchProInputReader(),
                 _ => new AutoInputReader()
             };
         }

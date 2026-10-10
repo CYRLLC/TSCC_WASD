@@ -29,6 +29,12 @@ body:
         - Xbox (Bluetooth / 藍牙)
         - Xbox (wireless adapter / 無線接收器)
         - Nintendo Switch 2 Pro (USB)
+        - DualShock 4 (USB)
+        - DualShock 4 (Bluetooth / 藍牙)
+        - DualSense (USB)
+        - DualSense (Bluetooth / 藍牙)
+        - Switch Pro, original / 第一代 (USB)
+        - Switch Pro, original / 第一代 (Bluetooth / 藍牙)
     validations:
       required: true
   - type: dropdown

@@ -9,7 +9,8 @@ public class HidHideGuardTests
 {
     private const string Ns2 = @"HID\VID_057E&PID_2069&MI_00\a&37d9c433&0&0000";
     private const string Xbox = @"HID\{00001812-0000-1000-8000-00805f9b34fb}&Dev&VID_045e&PID_0b13&REV_0509&686ce65b1cfd&IG_00\d&23b31df3&0&0000";
-    private const string Sony = @"HID\VID_054C&PID_05C4&REV_0100\2&1b721325&0&0000";
+    // Not a controller TSCC_WASD reads (a Logitech receiver), so it must never be hidden.
+    private const string Other = @"HID\VID_046D&PID_C52B&MI_02\8&1b721325&0&0000";
     private const string App = @"C:\Apps\TSCC_WASD.exe";
 
     private static string Gaming(params string[] paths) =>
@@ -19,7 +20,7 @@ public class HidHideGuardTests
     [Fact]
     public void HidesMatchingControllersThenRestoresOnlyItsOwnChanges()
     {
-        var cli = new FakeCli { Gaming = Gaming(Ns2, Xbox, Sony), Hidden = [Xbox] };
+        var cli = new FakeCli { Gaming = Gaming(Ns2, Xbox, Other), Hidden = [Xbox] };
         var guard = new HidHideGuard(cli.Run, TempRecord());
 
         string message = guard.Hide(App, InputDeviceType.Auto);

@@ -179,9 +179,11 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public ObservableCollection<MappingProfile> Profiles { get; } = new();
     public IReadOnlyList<InputOption> InputOptions { get; } =
     [
-        new(InputDeviceType.Auto, L.T("自動偵測（NS2 Pro／Xbox，建議）", "Auto-detect (NS2 Pro / Xbox, recommended)")),
+        new(InputDeviceType.Auto, L.T("自動偵測（所有支援的手把，建議）", "Auto-detect (every supported controller, recommended)")),
         new(InputDeviceType.XInput, L.T("只用 Xbox／XInput", "Xbox / XInput only")),
-        new(InputDeviceType.Switch2ProUsb, L.T("只用 Nintendo Switch 2 Pro（USB）", "Nintendo Switch 2 Pro (USB) only"))
+        new(InputDeviceType.Switch2ProUsb, L.T("只用 Nintendo Switch 2 Pro（USB）", "Nintendo Switch 2 Pro (USB) only")),
+        new(InputDeviceType.PlayStation, L.T("只用 DualShock 4／DualSense（實驗性）", "DualShock 4 / DualSense only (experimental)")),
+        new(InputDeviceType.SwitchPro, L.T("只用 Switch Pro 手把（第一代，實驗性）", "Switch Pro Controller, original (experimental)"))
     ];
     public sealed record InputOption(InputDeviceType Type, string Name);
     public IReadOnlyList<OutputOption> OutputOptions { get; } =

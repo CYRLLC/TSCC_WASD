@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0 — preview
+
+- **More controllers (experimental):** DualShock 4 and DualSense (USB and Bluetooth, with
+  motion and rumble), and the original Nintendo Switch Pro Controller (USB and Bluetooth; stick
+  travel is learned while playing, no rumble yet). Pair them with **Output as → Xbox 360** to
+  play PlayStation or Nintendo controllers with Xbox prompts. Auto-detect now watches all of them.
+  These were written from the published report layouts (SDL, DS4 / DualSense and Switch reverse-
+  engineering notes) and unit-tested with sample reports, but **not yet confirmed on hardware**;
+  please report results with the issue templates.
+- Virtual pads (TSCC_WASD's own DualShock 4 output or DS4Windows') are never read back as input.
+- NS2 Pro over Bluetooth is not included: it uses Bluetooth LE, which needs a separate Windows
+  BLE implementation; see PLAN.md.
+
 ## 0.8.0 — preview
 
 - **Choose your prompts:** each profile can output a virtual **Xbox 360** controller instead of

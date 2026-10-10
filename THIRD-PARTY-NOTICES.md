@@ -9,6 +9,13 @@ The NS2 Pro USB command sequence and HD-rumble encoding are adapted from SDL's
 retain SDL's zlib license and are marked as altered. See [full notice](licenses/SDL.txt).
 No SDL or libusb binary is bundled; the transport uses Windows WinUSB and HID APIs.
 
+## DualShock 4, DualSense and Switch Pro report layouts
+
+The DualShock 4 / DualSense and original Switch Pro report formats used by the experimental
+readers were written from public documentation (Sony controller reverse-engineering notes and
+dekuNukem's Nintendo_Switch_Reverse_Engineering) and cross-checked against SDL's hidapi drivers
+(zlib). No SDL source was copied for them.
+
 ## Nefarius.ViGEm.Client 1.21.256 (distributed with the application)
 
 Source: https://github.com/nefarius/ViGEm.NET

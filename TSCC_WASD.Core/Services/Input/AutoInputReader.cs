@@ -1,7 +1,8 @@
 namespace TSCC_WASD.Core.Services.Input;
 
 /// <summary>
-/// Reads NS2 Pro (USB) and XInput together and follows whichever controller the player is using.
+/// Reads every supported controller (NS2 Pro, DualShock 4 / DualSense, Switch Pro, Xbox / XInput)
+/// together and follows whichever one the player is using.
 /// The active source only changes when it disconnects or the other one receives deliberate input,
 /// so an idle controller that still streams neutral reports never steals control.
 /// </summary>
@@ -23,22 +24,38 @@ public sealed class AutoInputReader : IInputReader, IMotionSource, IRumbleTarget
     private const int TriggerThreshold = 30;
     private const int StickThreshold = 12000;
     private readonly IInputReader[] _sources;
-    private readonly string[] _names = ["NS2 Pro", "Xbox／XInput"];
+    private readonly string[] _names;
     private volatile int _active = -1;
     private volatile string _lastError = "";
     private volatile int _rumble; // large << 8 | small, replayed onto whichever source becomes active
     private bool _disposed;
 
-    public AutoInputReader() : this(new Switch2InputReader(), new XInputReader()) { }
+    public AutoInputReader() : this(
+        [new Switch2InputReader(), new PlayStationInputReader(), new SwitchProInputReader(), new XInputReader()],
+        ["NS2 Pro", "DualShock 4／DualSense", "Switch Pro", "Xbox／XInput"]) { }
 
-    public AutoInputReader(IInputReader switch2, IInputReader xinput) => _sources = [switch2, xinput];
+    public AutoInputReader(IInputReader switch2, IInputReader xinput) : this([switch2, xinput], ["NS2 Pro", "Xbox／XInput"]) { }
 
-    public string Status => _active switch
+    public AutoInputReader(IInputReader[] sources, string[] names)
     {
-        0 => L.T($"自動偵測 → {_sources[0].Status}", $"Auto-detect → {_sources[0].Status}"),
-        1 => L.T("自動偵測 → Xbox／XInput", "Auto-detect → Xbox / XInput"),
-        _ => L.T($"自動偵測：尋找手把中（NS2 Pro：{_sources[0].Status}；XInput：未連線{_lastError}）", $"Auto-detect: looking for a controller (NS2 Pro: {_sources[0].Status}; XInput: not connected{_lastError})")
-    };
+        _sources = sources;
+        _names = names;
+    }
+
+    public string Status
+    {
+        get
+        {
+            int active = _active;
+            if (active >= 0)
+                return L.T($"自動偵測 → {SourceStatus(active)}", $"Auto-detect → {SourceStatus(active)}");
+            // The NS2 Pro status explains USB setup and Steam sharing, so it stays visible while searching.
+            return L.T($"自動偵測：尋找手把中（NS2 Pro：{_sources[0].Status}；XInput：未連線{_lastError}）",
+                $"Auto-detect: looking for a controller (NS2 Pro: {_sources[0].Status}; XInput: not connected{_lastError})");
+        }
+    }
+
+    private string SourceStatus(int index) => _sources[index] is XInputReader ? L.T("Xbox／XInput", "Xbox / XInput") : _sources[index].Status;
 
     /// <summary>Name of the source currently being mapped, or null while none is available.</summary>
     public string? ActiveSource => _active < 0 ? null : _names[_active];
@@ -122,7 +139,12 @@ public sealed class AutoInputReader : IInputReader, IMotionSource, IRumbleTarget
     {
         if (_disposed) return;
         _disposed = true;
-        try { _sources[0].Dispose(); }
-        finally { _sources[1].Dispose(); }
+        List<Exception>? errors = null;
+        foreach (var source in _sources)
+        {
+            try { source.Dispose(); }
+            catch (Exception ex) { (errors ??= []).Add(ex); }
+        }
+        if (errors is not null) throw new AggregateException(errors);
     }
 }

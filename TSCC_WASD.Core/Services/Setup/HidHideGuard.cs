@@ -102,11 +102,16 @@ public sealed partial class HidHideGuard
         bool ns2 = Contains(instancePath, "VID_057E&PID_2069");
         // Microsoft gaming HID devices are Xbox controllers (Bluetooth / xinputhid).
         bool xbox = Contains(instancePath, "VID_045E");
+        bool known = Input.HidDevice.TryParseIds(instancePath, out ushort vid, out ushort pid, out _);
+        bool playStation = known && vid == Input.WindowsDevicePaths.SonyVendor && Input.WindowsDevicePaths.PlayStationProducts.Contains(pid);
+        bool switchPro = known && vid == Input.WindowsDevicePaths.NintendoVendor && pid == Input.WindowsDevicePaths.SwitchProProduct;
         return inputType switch
         {
             InputDeviceType.Switch2ProUsb => ns2,
             InputDeviceType.XInput => xbox,
-            _ => ns2 || xbox
+            InputDeviceType.PlayStation => playStation,
+            InputDeviceType.SwitchPro => switchPro,
+            _ => ns2 || xbox || playStation || switchPro
         };
     }
 

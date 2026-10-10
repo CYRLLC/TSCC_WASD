@@ -13,7 +13,11 @@ internal static class WindowsDevicePaths
     [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern uint CM_Get_Device_Interface_ListW(ref Guid guid, string? device, [Out] char[] buffer, uint length, uint flags);
 
-    internal static string[] Find(Guid guid)
+    internal static string[] Find(Guid guid) =>
+        [.. FindAll(guid).Where(p => p.Contains("vid_057e&pid_2069", StringComparison.OrdinalIgnoreCase))];
+
+    /// <summary>Every present interface of the class <paramref name="guid"/>.</summary>
+    internal static string[] FindAll(Guid guid)
     {
         for (int retry = 0; retry < 3; retry++)
         {
@@ -21,11 +25,24 @@ internal static class WindowsDevicePaths
             if (result != 0) throw new IOException($"Device enumeration failed: CONFIGRET 0x{result:X}.");
             var buffer = new char[length];
             result = CM_Get_Device_Interface_ListW(ref guid, null, buffer, length, 0);
-            if (result == 0) return new string(buffer).Split('\0', StringSplitOptions.RemoveEmptyEntries)
-                .Where(p => p.Contains("vid_057e&pid_2069", StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (result == 0) return new string(buffer).Split('\0', StringSplitOptions.RemoveEmptyEntries);
             if (result != 0x1A) throw new IOException($"Device enumeration failed: CONFIGRET 0x{result:X}.");
         }
         return [];
+    }
+
+    /// <summary>Sony DualShock 4 (v1, v2, wireless adapter) and DualSense (and Edge) product IDs.</summary>
+    internal static readonly ushort[] PlayStationProducts = [0x05C4, 0x09CC, 0x0BA0, 0x0CE6, 0x0DF2];
+    internal const ushort SonyVendor = 0x054C, NintendoVendor = 0x057E, SwitchProProduct = 0x2009;
+
+    /// <summary>True for device or interface IDs of the controllers TSCC_WASD reads and may hide.</summary>
+    internal static bool IsSupportedController(string id)
+    {
+        if (id.Contains("VID_057E&PID_2069", StringComparison.OrdinalIgnoreCase)) return true;
+        // Microsoft gaming devices are Xbox controllers (USB, XUSB/GIP, Bluetooth via xinputhid).
+        if (id.Contains("VID_045E", StringComparison.OrdinalIgnoreCase)) return true;
+        if (!HidDevice.TryParseIds(id, out ushort vid, out ushort pid, out _)) return false;
+        return (vid == SonyVendor && PlayStationProducts.Contains(pid)) || (vid == NintendoVendor && pid == SwitchProProduct);
     }
 
     // Device setup classes HidHide filters: HID, and those used by wired Xbox controllers (XUSB / GIP).
@@ -59,8 +76,7 @@ internal static class WindowsDevicePaths
         // HID: only the HID interfaces themselves (as HidHide lists them), not their USB function nodes.
         [.. ListClass(HidClass).Where(id => id.StartsWith(@"HID\", StringComparison.OrdinalIgnoreCase))
             .Concat(ListClass(XnaCompositeClass)).Concat(ListClass(XboxCompositeClass))
-            .Where(id => id.Contains("VID_057E&PID_2069", StringComparison.OrdinalIgnoreCase)
-                || id.Contains("VID_045E", StringComparison.OrdinalIgnoreCase))
+            .Where(IsSupportedController)
             .Where(id => !IsVirtual(id))
             .Distinct(StringComparer.OrdinalIgnoreCase)];
 
@@ -69,7 +85,7 @@ internal static class WindowsDevicePaths
     /// level lower. Physical controllers reach a USB root hub or Bluetooth stack within that distance.
     /// Unknown parents count as virtual so nothing questionable is hidden.
     /// </summary>
-    private static bool IsVirtual(string deviceId)
+    internal static bool IsVirtual(string deviceId)
     {
         string? current = deviceId;
         for (int level = 0; level < 2; level++)

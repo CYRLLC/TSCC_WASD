@@ -7,5 +7,7 @@ public enum InputDeviceType
     KeyboardMouse,
     Switch2ProUsb,
     // Appended so numeric values in older profiles.json files keep their meaning.
-    Auto
+    Auto,
+    PlayStation,
+    SwitchPro
 }
