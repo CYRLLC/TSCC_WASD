@@ -5,8 +5,15 @@ namespace TSCC_WASD.Core.Services.Input;
 /// The active source only changes when it disconnects or the other one receives deliberate input,
 /// so an idle controller that still streams neutral reports never steals control.
 /// </summary>
-public sealed class AutoInputReader : IInputReader, IMotionSource, IRumbleTarget
+public sealed class AutoInputReader : IInputReader, IMotionSource, IRumbleTarget, IXboxBackButtonOption
 {
+    /// <summary>Forwarded to the XInput source; the NS2 Pro has its own touchpad (Capture) button.</summary>
+    public bool BackAsTouchpad
+    {
+        get => _sources.OfType<IXboxBackButtonOption>().FirstOrDefault()?.BackAsTouchpad ?? false;
+        set { foreach (var source in _sources.OfType<IXboxBackButtonOption>()) source.BackAsTouchpad = value; }
+    }
+
     private const int TriggerThreshold = 30;
     private const int StickThreshold = 12000;
     private readonly IInputReader[] _sources;

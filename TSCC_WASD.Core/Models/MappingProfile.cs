@@ -14,6 +14,7 @@ public class MappingProfile : INotifyPropertyChanged
     private InputDeviceType _inputType = InputDeviceType.Auto;
     private bool _hidePhysicalControllers = true;
     private bool _forwardRumble = true;
+    private bool _xboxBackAsTouchpad = true;
 
     private void Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
     {
@@ -33,6 +34,12 @@ public class MappingProfile : INotifyPropertyChanged
 
     /// <summary>把遊戲送給虛擬 DS4 的震動轉給實體手把。</summary>
     public bool ForwardRumble { get => _forwardRumble; set => Set(ref _forwardRumble, value); }
+
+    /// <summary>
+    /// Xbox 的 View（Back）鍵送出 DS4 觸控板按下（PS 遊戲常用來開地圖或選單）；false 時送出 Share。
+    /// NS2 Pro 不受影響：它的－鍵送 Share、截圖鍵送觸控板。
+    /// </summary>
+    public bool XboxBackAsTouchpad { get => _xboxBackAsTouchpad; set => Set(ref _xboxBackAsTouchpad, value); }
 
     /// <summary>前景程式名稱 (不含路徑) 符合時自動套用。</summary>
     public string? MatchProcessName { get; set; }
@@ -71,6 +78,7 @@ public class MappingProfile : INotifyPropertyChanged
         {
             Id = Id, Name = Name, Description = Description,
             InputType = InputType, OutputType = OutputType, HidePhysicalControllers = HidePhysicalControllers, ForwardRumble = ForwardRumble,
+            XboxBackAsTouchpad = XboxBackAsTouchpad,
             PollingRateHz = PollingRateHz, DeadZone = DeadZone,
             MatchProcessName = MatchProcessName, RequireDrivers = RequireDrivers,
             Advanced = Advanced is null ? new() : new(Advanced)

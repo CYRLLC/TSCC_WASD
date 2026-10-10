@@ -2,9 +2,28 @@ using System.Runtime.InteropServices;
 
 namespace TSCC_WASD.Core.Services.Input;
 
-/// <summary>Reads the first available XInput slot (0–3) using the Windows inbox API.</summary>
-public sealed class XInputReader : IInputReader, IRumbleTarget
+/// <summary>Readers whose Xbox View (Back) button can be sent as the DS4 touchpad click.</summary>
+public interface IXboxBackButtonOption
 {
+    bool BackAsTouchpad { get; set; }
+}
+
+/// <summary>Reads the first available XInput slot (0–3) using the Windows inbox API.</summary>
+public sealed class XInputReader : IInputReader, IRumbleTarget, IXboxBackButtonOption
+{
+    private volatile bool _backAsTouchpad = true;
+
+    /// <summary>
+    /// Xbox controllers have no touchpad button, so View (Back) stands in for it by default;
+    /// otherwise View stays Back and becomes DS4 Share.
+    /// </summary>
+    public bool BackAsTouchpad { get => _backAsTouchpad; set => _backAsTouchpad = value; }
+
+    public static GamepadButtonFlags MapBack(GamepadButtonFlags buttons, bool backAsTouchpad) =>
+        backAsTouchpad && buttons.HasFlag(GamepadButtonFlags.Back)
+            ? (buttons & ~GamepadButtonFlags.Back) | GamepadButtonFlags.Touchpad
+            : buttons;
+
     [DllImport("xinput1_4.dll", ExactSpelling = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     private static extern uint XInputGetState(uint dwUserIndex, out State state);
@@ -36,6 +55,7 @@ public sealed class XInputReader : IInputReader, IRumbleTarget
             uint result = GetState(index, out state);
             if (result == 0)
             {
+                state.Gamepad.Buttons = MapBack(state.Gamepad.Buttons, _backAsTouchpad);
                 if (_slot != index) MoveRumble((int)index);
                 return true;
             }

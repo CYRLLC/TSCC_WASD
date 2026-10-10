@@ -5,7 +5,7 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.7.0 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.7.1 preview.** English and Traditional Chinese UI.
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
@@ -40,7 +40,8 @@ details and app settings sit in collapsible sections (shown expanded
   **Pause** gives games a neutral DS4 while the real controllers stay hidden, so nothing has to
   be re-detected. **Stop** still releases everything.
 - **Rumble, PS button and motion.** Game rumble is forwarded to the Xbox or NS2 Pro. The Xbox
-  Guide and NS2 Home buttons act as the PS button, and NS2 Capture as the touchpad click. The NS2
+  Guide and NS2 Home buttons act as the PS button; Xbox View (or Share, if you prefer) and NS2
+  Capture act as the touchpad click. The NS2
   Pro gyro and accelerometer become DS4 motion.
 - **Set and forget.** Optionally start with Windows in the notification area, begin mapping
   automatically, and start or restart Steam after the controllers are hidden, so you never

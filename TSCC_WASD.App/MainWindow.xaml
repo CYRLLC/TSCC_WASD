@@ -95,6 +95,10 @@
                                       Content="{app:T Zh=把遊戲震動轉給實體手把, En='Forward game rumble to the physical controller'}"/>
                             <TextBlock Style="{StaticResource Hint}"
                                        Text="{app:T Zh='Xbox 鍵與 NS2 Home 鍵對應 PS 鍵、NS2 截圖鍵對應觸控板按下；NS2 陀螺儀會轉成 DS4 體感。', En='Xbox Guide and NS2 Home map to PS, NS2 Capture to touchpad click, and the NS2 gyro becomes DS4 motion.'}"/>
+                            <CheckBox IsChecked="{Binding SelectedProfile.XboxBackAsTouchpad}"
+                                      Content="{app:T Zh='Xbox 的 View（Back）鍵當作觸控板按下', En='Use the Xbox View (Back) button as the touchpad click'}"/>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="{app:T Zh='PS 遊戲常用觸控板開地圖或選單。取消勾選則 View 鍵送出 Share；NS2 Pro 不受影響（－鍵是 Share、截圖鍵是觸控板）。', En='PS games often open the map or menu with the touchpad. Unchecked, View sends Share. The NS2 Pro is unaffected (Minus is Share, Capture is the touchpad).'}"/>
                             <Grid Margin="0,4,0,0">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
                                 <StackPanel>

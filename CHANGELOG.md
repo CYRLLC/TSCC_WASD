@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 — preview
+
+- Fixed: an Xbox controller could not press the DS4 touchpad, because View (Back) was sent as
+  Share and XInput has no other spare button. View now sends the **touchpad click** by default
+  (PS games often use it for the map or menu). A new per-profile option, *Use the Xbox View (Back)
+  button as the touchpad click*, switches it back to Share; it applies while mapping. The NS2 Pro
+  is unchanged (Minus is Share, Capture is the touchpad).
+
 ## 0.7.0 — preview
 
 - **No more Steam restarts.** When Steam already holds the physical controller, *automatic

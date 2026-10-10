@@ -160,6 +160,37 @@ public class MappingSessionTests
         Assert.Equal((0, 0), input.Last);
     }
 
+    [Fact]
+    public void XboxViewButtonBecomesTouchpadOrStaysShare()
+    {
+        var pressed = GamepadButtonFlags.Back | GamepadButtonFlags.A;
+        Assert.Equal(GamepadButtonFlags.Touchpad | GamepadButtonFlags.A, XInputReader.MapBack(pressed, backAsTouchpad: true));
+        Assert.Equal(pressed, XInputReader.MapBack(pressed, backAsTouchpad: false));
+        Assert.Equal(GamepadButtonFlags.A, XInputReader.MapBack(GamepadButtonFlags.A, backAsTouchpad: true));
+        Assert.True(new MappingProfile().XboxBackAsTouchpad); // Default: the touchpad is reachable on Xbox.
+    }
+
+    [Fact]
+    public async Task ViewButtonOptionFollowsTheProfileLive()
+    {
+        var input = new OptionInput();
+        await using var session = new MappingSession(new MappingProfile(), input, new FakeOutput());
+        Assert.True(input.BackAsTouchpad);
+        session.UpdateProfile(new MappingProfile { XboxBackAsTouchpad = false });
+        Assert.False(input.BackAsTouchpad);
+
+        var auto = new AutoInputReader(new OptionInput(), new OptionInput { BackAsTouchpad = true });
+        auto.BackAsTouchpad = false;
+        Assert.False(auto.BackAsTouchpad);
+    }
+
+    private sealed class OptionInput : IInputReader, IXboxBackButtonOption
+    {
+        public bool BackAsTouchpad { get; set; }
+        public bool TryGetState(out State state) { state = default; return false; }
+        public void Dispose() { }
+    }
+
     private static async Task WaitUntil(Func<bool> condition)
     {
         var deadline = DateTime.UtcNow.AddSeconds(5);

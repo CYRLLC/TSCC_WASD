@@ -26,6 +26,12 @@ public sealed class MappingSession : IAsyncDisposable
         _output = output;
         _statusCallback = statusCallback;
         _output.RumbleRequested += OnRumble;
+        ApplyInputOptions(_profile);
+    }
+
+    private void ApplyInputOptions(MappingProfile profile)
+    {
+        if (_input is IXboxBackButtonOption option) option.BackAsTouchpad = profile.XboxBackAsTouchpad;
     }
 
     private void OnRumble(byte large, byte small)
@@ -42,6 +48,7 @@ public sealed class MappingSession : IAsyncDisposable
         var snapshot = profile.Snapshot();
         bool rumbleTurnedOff = _profile.ForwardRumble && !snapshot.ForwardRumble;
         _profile = snapshot;
+        ApplyInputOptions(snapshot);
         if (rumbleTurnedOff) StopRumble();
     }
 
