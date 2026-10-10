@@ -14,7 +14,7 @@
 - 本機診斷日誌、當機記錄、複製診斷資訊；系統匣圖示顯示映射狀態。
 - Ko-fi 贊助連結、遊戲相容性回報範本與清單、程式碼簽章政策與 SignPath 申請教學。
 
-## 0.7 不用再重啟 Steam（已實作，待實機驗證）
+## 0.7 不用再重啟 Steam（已實作，NS2 Pro USB 已實機驗證；Xbox 待測）
 
 背景與研究見 [docs/ROADMAP-PROPOSAL.zh-TW.md](docs/ROADMAP-PROPOSAL.zh-TW.md)。已定案：
 

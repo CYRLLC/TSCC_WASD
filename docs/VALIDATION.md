@@ -31,6 +31,22 @@ button input, HidHide setup, game recognition or long-running stability.
 
 ## Manual hardware validation
 
+### 0.7.0 — automatic reconnect, 2026-10-10
+
+Windows 11 26100 (zh-TW), NS2 Pro on USB (root hub port 2), Steam running before mapping,
+Release build. Verified together with the user.
+
+| Check | Result |
+| --- | --- |
+| Set up automatic reconnect: one UAC prompt, helper copied to `%ProgramFiles%\TSCC_WASD\Helper`, task `\TSCC_WASD\ReconnectControllers` registered for the signed-in user | Passed |
+| Task started from the non-elevated app (no UAC), exit code 0, 1 USB port cycled, no errors | Passed |
+| NS2 Pro back about 1 s after the cycle; mapping resumed on its own and switched from shared HID to full USB init with factory calibration | Passed |
+| Stop: controllers reconnected, Steam's controller list shows the physical controller again | Passed, user-confirmed |
+| Start again with that Steam still running: no restart prompt; Steam's controller list shows only "PS4 Controller" | **Passed, user-confirmed** |
+| Pause / Resume while mapping | Passed |
+| Manual unplug/replug while mapping recovers | Passed |
+| Xbox controller (USB, wireless adapter, Bluetooth) with automatic reconnect | Not tested yet |
+
 ### 0.4.1 — USB Xbox controller, 2026-10-09
 
 Xbox Wireless Controller over USB (`045E:0B12`, GIP; XInput-compatible HID child `045E:02FF`),
