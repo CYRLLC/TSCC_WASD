@@ -5,7 +5,9 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.5.0 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.6.0 preview.** English and Traditional Chinese UI.
+
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
 **The name:** TSCC stands for **T**riangle, **S**quare, **C**ross and **C**ircle, the four
 PlayStation face buttons this tool makes your games show. The project was called *YnyrWASD*
@@ -37,11 +39,18 @@ details and app settings sit in collapsible sections (shown expanded
 - **Set and forget.** Optionally start with Windows in the notification area, begin mapping
   automatically, and start or restart Steam after the controllers are hidden, so you never
   restart Steam by hand.
+- **Everything in one download.** The release ZIP includes the .NET runtime and the official
+  ViGEmBus and HidHide installers. If a driver is missing, TSCC_WASD offers to install it when
+  it opens (or via **Install drivers**); each installer is checked against a pinned SHA-256 first.
+- **Diagnostics for bug reports.** A local log (`%APPDATA%\TSCC_WASD\logs`, last 7 days) and
+  **About → Copy diagnostics** (versions, drivers, controller state). The notification-area icon
+  shows a green dot while mapping.
 - Face buttons, D-pad, shoulders, stick clicks, sticks and triggers; dead zone and
   polling-rate settings; profiles with import/export.
-- No telemetry, background service or auto-updater. The only network access is **Check for
-  updates**, which asks GitHub for the latest release when you click it (or at startup, if you
-  turn that on). Updates are never downloaded or installed automatically.
+- No telemetry, background service or auto-updater. Network access only happens when you ask:
+  **Check for updates** asks GitHub for the latest release (or at startup, if you turn that on),
+  and **Install drivers** downloads an official installer from GitHub only if it is missing from
+  the `drivers` folder. Updates are never downloaded or installed automatically.
 
 **PS prompts still depend on the game.** The game must support DualShock 4 natively or
 through Steam Input. Games that only draw Xbox artwork will keep showing it.
@@ -54,20 +63,20 @@ are not mapped. See the [roadmap](PLAN.md).
 
 ## Quick start
 
-1. **Windows 10/11 x64.** Windows 11 is the tested platform.
-2. Install the **.NET 10 Windows Desktop Runtime (x64)** from
-   [Microsoft](https://dotnet.microsoft.com/download/dotnet/10.0).
-3. Install **ViGEmBus** (required) and **HidHide** (strongly recommended) from the
-   [official Nefarius downloads](https://docs.nefarius.at/Downloads/), then reboot if asked.
-   You do not need to configure HidHide; TSCC_WASD does that while it maps.
-4. Download a release ZIP from [Releases](https://github.com/CYRLLC/TSCC_WASD/releases)
+1. **Windows 10/11 x64.** Windows 11 is the tested platform. No separate .NET install is needed.
+2. Download a release ZIP from [Releases](https://github.com/CYRLLC/TSCC_WASD/releases)
    (or build it, see below), extract it and run `TSCC_WASD.exe`. Preview builds are not
    code-signed yet, so SmartScreen may warn; compare the ZIP with its `.sha256` file first
    ([details](docs/SIGNING.md)).
-5. Keep **Input = Auto-detect** and **Hide physical controllers while mapping** checked,
+3. On first launch TSCC_WASD offers to install **ViGEmBus** (required) and **HidHide**
+   (strongly recommended) with the official installers in the `drivers` folder. Choose **Yes**,
+   finish both installers and reboot if asked. You do not need to configure HidHide;
+   TSCC_WASD does that while it maps. (You can also get them from the
+   [official Nefarius downloads](https://docs.nefarius.at/Downloads/).)
+4. Keep **Input = Auto-detect** and **Hide physical controllers while mapping** checked,
    then click **Start mapping**.
-6. If TSCC_WASD says Steam was already running, choose **Yes** to restart Steam.
-7. **Then** launch the game.
+5. If TSCC_WASD says Steam was already running, choose **Yes** to restart Steam.
+6. **Then** launch the game.
 
 ### Recommended: start with Windows
 
@@ -148,8 +157,8 @@ dotnet run --project TSCC_WASD.App
 pwsh -File scripts/package.ps1
 ```
 
-Packaging produces a framework-dependent Windows x64 ZIP and SHA-256 checksum under
-`artifacts/`. The tests cover input math, auto-detect switching, DS4 raw-report layout,
+Packaging produces a self-contained, single-file Windows x64 ZIP (with the pinned driver
+installers in `drivers/`) and a SHA-256 checksum under `artifacts/`. The tests cover input math, auto-detect switching, DS4 raw-report layout,
 rumble encoding and routing, motion conversion, HidHide hide/restore logic, error recovery,
 settings and profile persistence, native layouts and the WPF editor. They do
 not prove compatibility with every controller or game. See [validation](docs/VALIDATION.md).
@@ -160,6 +169,15 @@ Profiles live in `%APPDATA%\TSCC_WASD\profiles.json`; the previous version is ke
 `profiles.json.bak`. App settings live in `settings.json` in the same folder. **Start with
 Windows** writes a per-user `HKCU\...\Run` entry; turning it off removes it. See [profile format](docs/PROFILES.md) and
 [troubleshooting](docs/TROUBLESHOOTING.md).
+
+## Uninstall
+
+1. Stop mapping and close TSCC_WASD (this restores your HidHide settings). If **Start with
+   Windows** is on, turn it off first so the sign-in entry is removed.
+2. Delete the extracted TSCC_WASD folder and, to remove profiles, settings and logs,
+   `%APPDATA%\TSCC_WASD`.
+3. Optionally uninstall **ViGEmBus** and **HidHide** in *Windows Settings → Apps → Installed apps*
+   (other tools such as DS4Windows may also use them).
 
 ## Similar projects
 
@@ -178,6 +196,26 @@ automatic hiding. These projects overlap in part:
 
 [HidHide](https://github.com/nefarius/HidHide) and [ViGEmBus](https://github.com/nefarius/ViGEmBus)
 are the building blocks TSCC_WASD relies on.
+
+## Reporting problems
+
+Open a [GitHub issue](https://github.com/CYRLLC/TSCC_WASD/issues) and paste **About → Copy
+diagnostics**; attach the log (**About → Open log folder**) if asked. Whether a game shows PS
+prompts is worth reporting too: use the *Game compatibility* template, and results are collected
+in the [compatibility list](docs/COMPATIBILITY.md).
+
+## Support the project
+
+TSCC_WASD is free and always will be. If it saves you a reWASD licence or just makes your
+games look right, you can [buy me a coffee on Ko-fi](https://ko-fi.com/ynyr5566). Bug reports,
+game compatibility reports and pull requests help just as much.
+
+## Code signing policy
+
+Preview releases are not code-signed yet; the project is applying to the free
+[SignPath Foundation](https://signpath.org/) programme. See the
+[code signing policy](docs/CODE-SIGNING-POLICY.md) for who builds, reviews and approves
+releases, and the privacy statement.
 
 ## Contributing and license
 

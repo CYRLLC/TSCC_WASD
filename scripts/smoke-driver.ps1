@@ -1,7 +1,8 @@
 #requires -Version 7.4
 # Optional integration check: briefly creates a neutral virtual DS4, then removes it.
 [CmdletBinding()]
-param([Parameter(Mandatory)][string] $AppDirectory)
+# Release ZIPs are single-file, so point it at a build output folder, not an extracted ZIP.
+param([string] $AppDirectory = (Join-Path $PSScriptRoot '../TSCC_WASD.App/bin/Release/net10.0-windows'))
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if (-not $IsWindows -or -not [Environment]::Is64BitProcess) {

@@ -38,17 +38,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## External prerequisites (not bundled)
+## .NET runtime (distributed inside TSCC_WASD.exe)
+
+Release builds are self-contained: the .NET 10 runtime and WPF/Windows Forms libraries are
+bundled into `TSCC_WASD.exe`. They are MIT licensed by the .NET Foundation and contributors:
+https://github.com/dotnet/runtime, https://github.com/dotnet/wpf and
+https://github.com/dotnet/winforms (each repository's LICENSE.TXT and THIRD-PARTY-NOTICES.TXT).
+
+## Driver installers (distributed unmodified in `drivers/`)
+
+The release ZIP includes the official, Authenticode-signed installers exactly as published by
+Nefarius Software Solutions e.U. TSCC_WASD does not modify them; it only starts them when the
+user agrees, after checking the SHA-256 pinned in `TSCC_WASD.Core/drivers.json`.
+
+- **ViGEmBus 1.22.0** (`ViGEmBus_1.22.0_x64_x86_arm64.exe`), BSD-3-Clause:
+  https://github.com/nefarius/ViGEmBus. See [licenses/ViGEmBus.txt](licenses/ViGEmBus.txt).
+  ViGEmBus is end-of-life upstream: https://docs.nefarius.at/projects/ViGEm/End-of-Life/
+- **HidHide 1.5.230** (`HidHide_1.5.230_x64.exe`), MIT: https://github.com/nefarius/HidHide.
+  See [licenses/HidHide.txt](licenses/HidHide.txt). While mapping, TSCC_WASD runs the installed
+  `HidHideCLI.exe` as a separate process to change and later restore its configuration; no
+  HidHide code is linked into TSCC_WASD.
+
+## Not bundled
 
 - Windows XInput API is supplied by Windows.
-- .NET 10 Windows Desktop Runtime is installed separately:
-  https://github.com/dotnet/runtime and https://github.com/dotnet/wpf.
-- ViGEmBus driver is separately distributed under BSD-3-Clause:
-  https://github.com/nefarius/ViGEmBus/blob/master/LICENSE.
-- HidHide (MIT, https://github.com/nefarius/HidHide) is optional, installed separately
-  and not redistributed. While mapping, TSCC_WASD runs the user's installed `HidHideCLI.exe`
-  as a separate process to change and later restore its configuration; no HidHide code
-  or binary is included in TSCC_WASD.
 - Steam is not bundled or linked. TSCC_WASD only starts the user's installed `steam.exe`
   (with `-shutdown`, then normally) when the user asks it to restart Steam.
 

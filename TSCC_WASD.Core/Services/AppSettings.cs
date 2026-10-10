@@ -34,6 +34,9 @@ public sealed class AppSettings
     /// <summary>Check GitHub for a newer release when the app opens. Off by default: no network unless asked.</summary>
     public bool CheckUpdatesOnStartup { get; set; }
 
+    /// <summary>Offer to install HidHide at launch while it is missing. ViGEmBus is always offered: mapping needs it.</summary>
+    public bool OfferHidHideInstall { get; set; } = true;
+
     public string? LastProfileId { get; set; }
 }
 

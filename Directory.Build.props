@@ -1,11 +1,13 @@
 <Project>
   <PropertyGroup>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <Authors>TSCC_WASD contributors</Authors>
     <Product>TSCC_WASD</Product>
     <Description>Makes Xbox and NS2 Pro controllers appear as a DualShock 4 on Windows.</Description>
     <PackageLicenseExpression>MIT AND Zlib</PackageLicenseExpression>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <Deterministic>true</Deterministic>
+    <!-- Keep the EXE's product version a plain 0.6.0 (no +commit suffix): code signing checks it. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 </Project>

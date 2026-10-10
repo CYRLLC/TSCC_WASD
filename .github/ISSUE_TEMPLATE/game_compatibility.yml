@@ -1,0 +1,57 @@
+name: Game compatibility / 遊戲相容性回報
+description: Tell us whether a game shows PlayStation prompts with TSCC_WASD.
+labels: [compatibility]
+body:
+  - type: input
+    id: game
+    attributes:
+      label: Game / 遊戲
+      description: Name and store (Steam, Epic, Xbox app, ...).
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result / 結果
+      options:
+        - PS prompts, stable / 穩定顯示 PS 圖示
+        - PS prompts, but they flicker or switch back / 有 PS 圖示但會閃爍或切回
+        - Xbox prompts only / 只顯示 Xbox 圖示
+        - Controller does not work / 手把無法使用
+    validations:
+      required: true
+  - type: dropdown
+    id: controller
+    attributes:
+      label: Controller / 手把
+      options:
+        - Xbox (USB)
+        - Xbox (Bluetooth / 藍牙)
+        - Xbox (wireless adapter / 無線接收器)
+        - Nintendo Switch 2 Pro (USB)
+    validations:
+      required: true
+  - type: dropdown
+    id: steam_input
+    attributes:
+      label: Steam Input
+      options:
+        - Not a Steam game / 非 Steam 遊戲
+        - Default or enabled / 預設或啟用
+        - Disabled / 停用
+    validations:
+      required: true
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What worked? / 哪些功能正常？
+      options:
+        - label: Rumble / 震動
+        - label: PS button / PS 鍵
+        - label: Touchpad click / 觸控板按下
+        - label: Motion (NS2 Pro gyro) / 體感
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes and diagnostics / 備註與診斷資訊
+      description: Paste About → Copy diagnostics, plus anything special (in-game prompt setting, launch order). / 貼上「關於 → 複製診斷資訊」與其他說明。

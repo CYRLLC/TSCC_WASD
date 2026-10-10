@@ -24,9 +24,31 @@ try {
     Invoke-DotNet @('restore', 'TSCC_WASD.sln', '--locked-mode', '-p:NuGetAuditMode=all', '-warnaserror')
     Invoke-DotNet @('build', 'TSCC_WASD.sln', '-c', 'Release', '--no-restore', '-warnaserror')
     Invoke-DotNet @('test', 'TSCC_WASD.sln', '-c', 'Release', '--no-build', '--logger', 'trx')
+    # Self-contained single file: users need no separate .NET Desktop Runtime.
     Invoke-DotNet @('publish', 'TSCC_WASD.App/TSCC_WASD.App.csproj', '-c', 'Release',
-        '--no-restore', '--self-contained', 'false', '-p:PlatformTarget=x64',
+        '--no-restore', '-r', 'win-x64', '--self-contained', 'true', '-p:PublishSingleFile=true',
+        '-p:IncludeNativeLibrariesForSelfExtract=true', '-p:EnableCompressionInSingleFile=true',
         '-p:DebugType=None', '-p:DebugSymbols=false', '-o', $packageDir)
+
+    # Official ViGEmBus and HidHide installers, pinned in drivers.json (the app checks the same hashes).
+    $driverCache = Join-Path $artifactRoot 'driver-cache'
+    $driverDir = Join-Path $packageDir 'drivers'
+    New-Item -ItemType Directory -Path $driverCache, $driverDir -Force | Out-Null
+    $drivers = Get-Content -Raw 'TSCC_WASD.Core/drivers.json' | ConvertFrom-Json
+    foreach ($driver in $drivers) {
+        $cached = Join-Path $driverCache $driver.fileName
+        $valid = (Test-Path -LiteralPath $cached) -and
+            ((Get-FileHash -LiteralPath $cached -Algorithm SHA256).Hash -eq $driver.sha256)
+        if (-not $valid) {
+            Invoke-WebRequest -Uri $driver.url -OutFile $cached
+            $actual = (Get-FileHash -LiteralPath $cached -Algorithm SHA256).Hash
+            if ($actual -ne $driver.sha256) {
+                Remove-Item -LiteralPath $cached
+                throw "$($driver.name) installer hash mismatch: $actual"
+            }
+        }
+        Copy-Item -LiteralPath $cached -Destination $driverDir
+    }
     foreach ($name in @('README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CHANGELOG.md',
         'CONTRIBUTING.md', 'SECURITY.md', 'PLAN.md')) {
         Copy-Item -LiteralPath (Join-Path $repoRoot $name) -Destination $packageDir
@@ -34,8 +56,8 @@ try {
     Copy-Item -LiteralPath (Join-Path $repoRoot 'docs') -Destination $packageDir -Recurse
     Copy-Item -LiteralPath (Join-Path $repoRoot 'examples') -Destination $packageDir -Recurse
     Copy-Item -LiteralPath (Join-Path $repoRoot 'licenses') -Destination $packageDir -Recurse
-    foreach ($required in @('TSCC_WASD.exe', 'TSCC_WASD.dll',
-        'TSCC_WASD.runtimeconfig.json', 'Nefarius.ViGEm.Client.dll', 'LICENSE')) {
+    $requiredFiles = @('TSCC_WASD.exe', 'LICENSE') + @($drivers | ForEach-Object { 'drivers/' + $_.fileName })
+    foreach ($required in $requiredFiles) {
         if (-not (Test-Path -LiteralPath (Join-Path $packageDir $required))) {
             throw "Missing package file: $required"
         }

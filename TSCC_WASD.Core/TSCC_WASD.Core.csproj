@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Pinned driver installers; scripts/package.ps1 reads the same file. -->
+    <EmbeddedResource Include="drivers.json" LogicalName="TSCC_WASD.Core.drivers.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
   </ItemGroup>
 

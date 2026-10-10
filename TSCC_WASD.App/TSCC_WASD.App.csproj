@@ -15,16 +15,14 @@
     <!-- WinForms only for the notification-area icon; keep its types out of the global namespace. -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\TSCC_WASD.ico</ApplicationIcon>
+    <!-- Release ZIPs are self-contained (no separate .NET install); restore needs the RID for the lock file. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
     <Resource Include="Assets\TSCC_WASD.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="scripts\install-deps.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

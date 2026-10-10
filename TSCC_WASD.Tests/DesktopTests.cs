@@ -86,6 +86,33 @@ public class DesktopTests
                     expandedEncoder.Frames.Add(BitmapFrame.Create(expanded));
                     using (var stream = File.Create(Path.Combine(screenshotDir, "editor-expanded.png"))) expandedEncoder.Save(stream);
                 }
+                // About binds the diagnostics, log and Ko-fi commands to the same view model.
+                var about = new AboutWindow { DataContext = vm };
+                var aboutContent = (FrameworkElement)about.Content;
+                about.Content = null;
+                var aboutSurface = new System.Windows.Controls.Border
+                {
+                    Child = aboutContent, Background = about.Background,
+                    Resources = about.Resources, DataContext = vm, Width = 460
+                };
+                System.Windows.Documents.TextElement.SetForeground(aboutSurface, about.Foreground);
+                aboutSurface.Measure(new Size(460, double.PositiveInfinity));
+                aboutSurface.Arrange(new Rect(aboutSurface.DesiredSize));
+                aboutSurface.UpdateLayout();
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                Assert.True(vm.CopyDiagnosticsCommand.CanExecute(null));
+                Assert.True(vm.SupportCommand.CanExecute(null));
+                if (!string.IsNullOrEmpty(screenshotDir))
+                {
+                    var aboutBitmap = new RenderTargetBitmap(460, (int)Math.Ceiling(aboutSurface.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+                    aboutBitmap.Render(aboutSurface);
+                    var aboutEncoder = new PngBitmapEncoder();
+                    aboutEncoder.Frames.Add(BitmapFrame.Create(aboutBitmap));
+                    using var stream = File.Create(Path.Combine(screenshotDir, "about.png"));
+                    aboutEncoder.Save(stream);
+                }
+                about.Close();
+
                 Assert.Equal("", errors.ToString());
                 window.Close();
                 completion.TrySetResult();

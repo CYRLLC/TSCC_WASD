@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0 — preview
+
+- **One download has everything.** The release ZIP is self-contained (no separate .NET install)
+  and includes the official ViGEmBus 1.22.0 and HidHide 1.5.230 installers in `drivers/`.
+- When a driver is missing, TSCC_WASD offers to install it at launch; **Install drivers** does the
+  same any time. Installers are checked against pinned SHA-256 hashes, run with a Windows
+  administrator prompt, and are downloaded from GitHub only if the `drivers` folder lacks them.
+  Declining HidHide is remembered; ViGEmBus is offered until installed.
+- Local diagnostic log in `%APPDATA%\TSCC_WASD\logs` (last 7 days), crash handling that logs
+  unexpected errors instead of closing silently, and **About → Copy diagnostics / Open log folder**.
+- The notification-area icon shows a green dot while mapping.
+- Ko-fi support link in About, README and the GitHub Sponsor button.
+- Game compatibility issue template and list (docs/COMPATIBILITY.md); uninstall instructions;
+  code signing policy and a step-by-step SignPath Foundation guide (Traditional Chinese). The
+  release workflow can sign through SignPath once it is configured.
+
 ## 0.5.0 — preview
 
 - Redesigned window: one dark theme for every control (no light text boxes, drop-downs, lists or

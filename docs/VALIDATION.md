@@ -19,10 +19,11 @@ security assessment of Windows or the external ViGEmBus driver.
 
 Optional real-driver smoke check also passed against the packaged DLLs:
 virtual DS4 connection, neutral report submission, disconnection and disposal.
-Run it explicitly on a machine with ViGEmBus installed:
+Run it explicitly on a machine with ViGEmBus installed, after a Release build (since 0.6.0 the
+release ZIP is a single file, so the script loads the DLLs from the build output by default):
 
 ```powershell
-pwsh -File scripts/smoke-driver.ps1 -AppDirectory <extracted-app-directory>
+pwsh -File scripts/smoke-driver.ps1
 ```
 
 This creates a short-lived neutral virtual controller. It does not test physical

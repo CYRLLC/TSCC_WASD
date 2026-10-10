@@ -5,7 +5,7 @@ body:
     id: environment
     attributes:
       label: Version and environment
-      description: App version, Windows version, controller model and USB/Bluetooth.
+      description: Paste About → Copy diagnostics here, then add the controller model and USB/Bluetooth.
     validations:
       required: true
   - type: textarea

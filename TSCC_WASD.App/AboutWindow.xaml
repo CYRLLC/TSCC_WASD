@@ -30,6 +30,15 @@
                     Tag="https://github.com/CYRLLC/TSCC_WASD/blob/main/THIRD-PARTY-NOTICES.md"/>
             <Button Content="{app:T Zh=回報問題, En='Report an issue'}" Click="OnOpen" Tag="https://github.com/CYRLLC/TSCC_WASD/issues"/>
         </WrapPanel>
+        <WrapPanel Margin="0,0,0,16">
+            <Button Content="{app:T Zh=複製診斷資訊, En='Copy diagnostics'}" Command="{Binding CopyDiagnosticsCommand}"
+                    ToolTip="{app:T Zh='版本、驅動程式與手把狀態，貼到問題回報中', En='Versions, drivers and controller state, for a bug report'}"/>
+            <Button Content="{app:T Zh=開啟日誌資料夾, En='Open log folder'}" Command="{Binding OpenLogsCommand}"/>
+        </WrapPanel>
+        <TextBlock Style="{StaticResource Muted}" Margin="0,0,0,8"
+                   Text="{app:T Zh='TSCC_WASD 免費且開源。如果它幫上忙，歡迎請作者喝杯咖啡。', En='TSCC_WASD is free and open source. If it helps you, you can buy the author a coffee.'}"/>
+        <Button Content="{app:T Zh='☕ 在 Ko-fi 支持', En='☕ Support on Ko-fi'}" Command="{Binding SupportCommand}"
+                HorizontalAlignment="Left" Margin="0,0,0,16"/>
         <Button Content="{app:T Zh=關閉, En=Close}" IsCancel="True" IsDefault="True" HorizontalAlignment="Right"
                 Style="{StaticResource PrimaryButton}" Margin="0" Click="OnClose"/>
     </StackPanel>

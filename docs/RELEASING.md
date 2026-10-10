@@ -13,14 +13,18 @@
 1. Update `Directory.Build.props`, CHANGELOG and README version together.
 2. Run `pwsh -File scripts/package.ps1` on Windows x64.
 3. Extract the ZIP into a new folder; verify the checksum with `Get-FileHash`.
-4. Check launch, profile editing, missing-driver messages, start/stop and closing.
+4. Check launch, profile editing, the missing-driver install offer, start/stop and closing.
    Record actual hardware results in VALIDATION; never mark untested rows as passing.
 5. Commit the source and push a matching `v0.1.0`-style tag. The tag workflow
    builds/tests and creates a **draft prerelease**, never a public stable release.
 6. Review assets, setup instructions and limitations in the draft before publishing.
 
-The ZIP is framework-dependent: it requires .NET 10 Windows Desktop Runtime x64.
-It contains no driver installer, runtime, private profile or signing certificate.
+The ZIP is self-contained: `TSCC_WASD.exe` is a single file that includes the .NET 10
+runtime. `drivers/` holds the official ViGEmBus and HidHide installers pinned in
+`TSCC_WASD.Core/drivers.json`; packaging fails if a download does not match its SHA-256.
+To move to a newer driver release, update the URL, file name, version and SHA-256 there
+(the app checks the same values) and note it in CHANGELOG and THIRD-PARTY-NOTICES.
+The ZIP contains no private profile or signing certificate.
 The EXE is unsigned until code signing is set up; see [SIGNING.md](SIGNING.md).
 A source checkout can be archived with `git archive` after reviewing tracked files.
 

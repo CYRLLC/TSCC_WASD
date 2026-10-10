@@ -3,7 +3,9 @@
 免費開源的 Windows 工具：讓遊戲把你的 Xbox 或 Nintendo Switch 2 Pro 手把當成
 PlayStation DualShock 4，顯示 PS 按鍵圖示。對應付費軟體 reWASD 最常用的「偽裝成 DS4」功能，
 改用免費元件 ViGEmBus（虛擬 DS4）與 HidHide（隱藏實體手把）完成。
-目前為 **0.5.0 預覽版**，介面支援繁體中文與英文。
+目前為 **0.6.0 預覽版**，介面支援繁體中文與英文。
+
+[![在 Ko-fi 支持](https://img.shields.io/badge/Ko--fi-支持這個專案-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
 **名稱由來：** TSCC 是 **T**riangle（三角形）、**S**quare（正方形）、**C**ross（叉叉）、**C**ircle（圓形）
 的縮寫，也就是這個工具讓遊戲顯示的四個 PlayStation 按鍵。本專案在 0.4.0 以前叫 *YnyrWASD*，
@@ -26,9 +28,14 @@ PlayStation DualShock 4，顯示 PS 按鍵圖示。對應付費軟體 reWASD 最
   NS2 的截圖鍵當作觸控板按下；NS2 Pro 的陀螺儀與加速度計會轉成 DS4 體感。
 - **設定一次就好：** 可選擇登入 Windows 時自動啟動、縮在系統匣直接映射，並在隱藏手把後才啟動或重啟 Steam，
   從此不用手動重啟 Steam。
+- **下載一次就齊全：** Release ZIP 內含 .NET 執行環境，以及 ViGEmBus、HidHide 的官方安裝程式。
+  開啟時若偵測到缺少驅動，會詢問是否安裝（也可以隨時按「安裝驅動程式」）；執行前會先核對固定的 SHA-256。
+- **方便回報問題：** 本機日誌（`%APPDATA%\TSCC_WASD\logs`，保留 7 天），以及「關於 → 複製診斷資訊」
+  （版本、驅動程式、手把狀態）。映射中時系統匣圖示會出現綠點。
 - 常用按鍵、方向鍵、搖桿、扳機；死區與輪詢頻率；設定檔匯入／匯出。
-- 不收集遙測、沒有背景服務、不會自動更新。唯一的連網是「檢查更新」：按下時（或在設定中開啟啟動時檢查）
-  向 GitHub 查詢最新版本；不會自動下載或安裝。
+- 不收集遙測、沒有背景服務、不會自動更新。只有你主動要求時才會連網：「檢查更新」向 GitHub 查詢最新版本
+  （或在設定中開啟啟動時檢查）；「安裝驅動程式」只在 `drivers` 資料夾裡沒有安裝檔時，才從 GitHub 下載官方安裝程式。
+  不會自動下載或安裝更新。
 
 **PS 圖示仍取決於遊戲：** 遊戲必須原生支援 DS4，或透過 Steam Input 支援。只內建 Xbox 圖示的遊戲還是會顯示 Xbox。
 
@@ -37,15 +44,16 @@ NS2 Pro 僅支援 USB，C 鍵與背面 GL/GR 尚未映射。
 
 ## 安裝與快速開始
 
-1. Windows 10／11 x64（Windows 11 為主要測試平台）。
-2. 安裝 [.NET 10 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/10.0)。
-3. 從[官方下載頁](https://docs.nefarius.at/Downloads/)安裝 **ViGEmBus**（必要）與 **HidHide**（強烈建議，不需手動設定），
-   依提示重新開機。ViGEmBus 已停止維護，請參考[上游公告](https://docs.nefarius.at/projects/ViGEm/End-of-Life/)。
-4. 從 [Releases](https://github.com/CYRLLC/TSCC_WASD/releases) 下載 ZIP，解壓後執行 `TSCC_WASD.exe`。
+1. Windows 10／11 x64（Windows 11 為主要測試平台）。不需要另外安裝 .NET。
+2. 從 [Releases](https://github.com/CYRLLC/TSCC_WASD/releases) 下載 ZIP，解壓後執行 `TSCC_WASD.exe`。
    預覽版尚未數位簽章，SmartScreen 可能出現警告；請先比對 ZIP 與 `.sha256` 檔（[說明](SIGNING.md)）。
-5. 輸入手把保持「自動偵測」，勾選「映射時自動隱藏實體手把」，按「啟動映射」。
-6. 若提示 Steam 已在執行，選「是」重新啟動 Steam。
-7. **最後才開遊戲。**
+3. 第一次開啟時，程式會詢問是否用 `drivers` 資料夾內的官方安裝程式安裝 **ViGEmBus**（必要）與
+   **HidHide**（強烈建議，不需手動設定）。選「是」，完成兩個安裝程式，依提示重新開機。
+   也可以從[官方下載頁](https://docs.nefarius.at/Downloads/)自行安裝。ViGEmBus 已停止維護，
+   請參考[上游公告](https://docs.nefarius.at/projects/ViGEm/End-of-Life/)。
+4. 輸入手把保持「自動偵測」，勾選「映射時自動隱藏實體手把」，按「啟動映射」。
+5. 若提示 Steam 已在執行，選「是」重新啟動 Steam。
+6. **最後才開遊戲。**
 
 ### 建議：開機自動啟動
 
@@ -88,6 +96,29 @@ HidHide 為反向清單模式時不會更動。NS2 Pro，以及藍牙和 USB 連
 
 NS2 Pro 若推到底卻像輕推、或放開時飄移，按「校準 NS2 Pro 搖桿」照步驟做一次即可（映射中也可以）。
 NS2 Pro 的細節見 [NS2 Pro 設定說明](NS2-PRO.md)，常見問題見[疑難排解](TROUBLESHOOTING.md)。
+
+## 解除安裝
+
+1. 停止映射並關閉 TSCC_WASD（會還原 HidHide 設定）。若有開「登入 Windows 時自動啟動」，先取消勾選以移除開機項目。
+2. 刪除解壓出來的 TSCC_WASD 資料夾；若要一併刪除設定檔、設定與日誌，再刪除 `%APPDATA%\TSCC_WASD`。
+3. 視需要到「Windows 設定 → 應用程式 → 已安裝的應用程式」解除安裝 **ViGEmBus** 與 **HidHide**
+   （DS4Windows 等其他工具可能也在使用）。
+
+## 回報問題
+
+到 [GitHub Issues](https://github.com/CYRLLC/TSCC_WASD/issues) 回報，請先按「關於 → 複製診斷資訊」貼上，
+必要時附上日誌（「關於 → 開啟日誌資料夾」）。遊戲能不能顯示 PS 圖示，也歡迎用「遊戲相容性回報」範本告訴我們，
+結果會整理到[相容性清單](COMPATIBILITY.md)。
+
+## 支持這個專案
+
+TSCC_WASD 永遠免費。如果它幫你省下 reWASD 的費用，或只是讓遊戲畫面看起來對了，
+歡迎在 [Ko-fi 請我喝杯咖啡](https://ko-fi.com/ynyr5566)。回報問題、相容性結果和 Pull Request 也同樣是很大的幫助。
+
+## 程式碼簽章政策
+
+預覽版目前尚未數位簽章，正在申請 [SignPath Foundation](https://signpath.org/) 的免費開源簽章。
+誰負責建置、審查與核准發布，以及隱私聲明，見[程式碼簽章政策](CODE-SIGNING-POLICY.md)。
 
 ## 授權
 

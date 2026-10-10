@@ -76,11 +76,31 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             }
             return Task.CompletedTask;
         }, () => !IsRunning && Profiles.Count > 0);
-        InstallDepsCommand = Command(() =>
+        InstallDepsCommand = Command(async () =>
         {
-            OpenUrl("https://docs.nefarius.at/Downloads/");
-            StatusMessage = L.T("已開啟官方下載頁。ViGEmBus 為必要依賴；HidHide 強烈建議安裝（不需手動設定）。",
-                "Opened the official downloads. ViGEmBus is required; HidHide is strongly recommended (no setup needed).");
+            var missing = DriverInstaller.Missing();
+            if (missing.Count == 0)
+            {
+                StatusMessage = L.T("ViGEmBus 與 HidHide 都已安裝。", "ViGEmBus and HidHide are both installed.");
+                return;
+            }
+            if (ConfirmDriverInstall(missing)) await InstallDriversAsync(missing);
+        }, () => !IsRunning);
+        CopyDiagnosticsCommand = Command(() =>
+        {
+            Clipboard.SetText(DiagnosticReport.Build(InputSummary, IsRunning) + $"Log: {AppLog.CurrentFile}{Environment.NewLine}");
+            StatusMessage = L.T("診斷資訊已複製，可直接貼到 GitHub 問題回報。", "Diagnostics copied. Paste them into a GitHub issue.");
+            return Task.CompletedTask;
+        });
+        OpenLogsCommand = Command(() =>
+        {
+            Directory.CreateDirectory(AppLog.Directory);
+            Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { AppLog.Directory }, UseShellExecute = true });
+            return Task.CompletedTask;
+        });
+        SupportCommand = Command(() =>
+        {
+            OpenUrl(KoFiUrl);
             return Task.CompletedTask;
         });
         CalibrateCommand = Command(() =>
@@ -101,7 +121,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         });
         AboutCommand = Command(() =>
         {
-            new AboutWindow { Owner = Application.Current?.MainWindow }.ShowDialog();
+            new AboutWindow { Owner = Application.Current?.MainWindow, DataContext = this }.ShowDialog();
             return Task.CompletedTask;
         });
         OpenProfilesCommand = Command(() =>
@@ -233,6 +253,11 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public ICommand CheckUpdatesCommand { get; }
     public ICommand OpenHelpCommand { get; }
     public ICommand AboutCommand { get; }
+    public ICommand CopyDiagnosticsCommand { get; }
+    public ICommand OpenLogsCommand { get; }
+    public ICommand SupportCommand { get; }
+
+    public const string KoFiUrl = "https://ko-fi.com/ynyr5566";
 
     public string VersionText => $"v{UpdateChecker.CurrentVersion.ToString(3)}";
 
@@ -241,6 +266,78 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     internal static void OpenUrl(string url) =>
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
+
+    /// <summary>
+    /// At launch, offers to install missing drivers: ViGEmBus always (mapping needs it), HidHide
+    /// until the user declines once. Declining HidHide is remembered; the Install drivers link still works.
+    /// </summary>
+    public async Task OfferMissingDriversAsync()
+    {
+        var missing = DriverInstaller.Missing().Where(p => p.Required || Settings.OfferHidHideInstall).ToList();
+        if (missing.Count == 0 || IsRunning || _busy) return;
+        if (ConfirmDriverInstall(missing))
+        {
+            await RunGuardedAsync(() => InstallDriversAsync(missing));
+            return;
+        }
+        if (missing.Any(p => !p.Required))
+        {
+            Settings.OfferHidHideInstall = false;
+            SaveSettings();
+        }
+        StatusMessage = L.T("之後可隨時按「安裝驅動程式」安裝。", "You can install them any time with Install drivers.");
+    }
+
+    private static bool ConfirmDriverInstall(IReadOnlyList<DriverPackage> packages)
+    {
+        var lines = string.Join(Environment.NewLine, packages.Select(p => p.Required
+            ? L.T($"• {p.Name} {p.Version}（必要：建立虛擬 DS4）", $"• {p.Name} {p.Version} (required: creates the virtual DS4)")
+            : L.T($"• {p.Name} {p.Version}（強烈建議：對遊戲隱藏實體手把）", $"• {p.Name} {p.Version} (strongly recommended: hides the real controller from games)")));
+        var source = packages.All(DriverInstaller.IsBundled)
+            ? L.T("將執行程式資料夾 drivers 內附的 Nefarius 官方安裝程式", "The official Nefarius installers in the drivers folder will run")
+            : L.T("將從 GitHub 下載 Nefarius 官方安裝程式", "The official Nefarius installers will be downloaded from GitHub");
+        var answer = MessageBox.Show(
+            L.T($"尚未安裝下列免費驅動程式：\n\n{lines}\n\n要現在安裝嗎？{source}，執行前會核對 SHA-256。" +
+                "Windows 會要求管理員權限，安裝後可能需要重新開機。\n解除安裝：Windows 設定 → 應用程式。",
+                $"These free drivers are not installed:\n\n{lines}\n\nInstall them now? {source}; each is checked against its SHA-256 first. " +
+                "Windows asks for administrator rights, and a restart may be needed afterwards.\nTo uninstall: Windows Settings → Apps."),
+            AppPaths.Name, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        return answer == MessageBoxResult.Yes;
+    }
+
+    /// <summary>Runs each official installer in turn; stops at the first failure or cancelled UAC prompt.</summary>
+    private async Task InstallDriversAsync(IReadOnlyList<DriverPackage> packages)
+    {
+        foreach (var package in packages)
+        {
+            StatusMessage = L.T($"正在準備 {package.Name} {package.Version} 安裝程式…", $"Preparing the {package.Name} {package.Version} installer…");
+            string installer;
+            try { installer = await DriverInstaller.GetInstallerAsync(package); }
+            catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException
+                                           or IOException or InvalidDataException or UnauthorizedAccessException)
+            {
+                OpenUrl(DriverDownloadsUrl);
+                StatusMessage = L.T($"無法取得 {package.Name} 安裝程式：{ex.Message} 已開啟官方下載頁。",
+                    $"Could not get the {package.Name} installer: {ex.Message} Opened the official downloads page.");
+                return;
+            }
+            StatusMessage = L.T($"請在 {package.Name} 安裝程式中完成安裝…", $"Finish the {package.Name} installer…");
+            if (await DriverInstaller.RunAsync(installer) is null)
+            {
+                StatusMessage = L.T($"已取消安裝 {package.Name}。", $"{package.Name} installation was cancelled.");
+                return;
+            }
+        }
+        DependencyStatus = DependencyChecker.BuildStatusText();
+        var stillMissing = DriverInstaller.Missing().Select(p => p.Id).Intersect(packages.Select(p => p.Id)).Any();
+        StatusMessage = stillMissing
+            ? L.T("仍偵測不到部分驅動程式。若安裝程式要求重新開機，請重開機後再開啟 TSCC_WASD。",
+                "Some drivers are still not detected. If an installer asked for a restart, restart Windows and open TSCC_WASD again.")
+            : L.T("驅動程式安裝完成。若安裝程式要求重新開機，請先重開機再啟動映射。",
+                "Drivers installed. If an installer asked for a restart, restart Windows before mapping.");
+    }
+
+    private const string DriverDownloadsUrl = "https://docs.nefarius.at/Downloads/";
 
     /// <summary>Asks GitHub for the newest release. Quiet mode (startup check) only speaks up for an update.</summary>
     public async Task CheckUpdatesAsync(bool quiet)

@@ -13,6 +13,7 @@
           "Nefarius.ViGEm.Client": "[1.21.256, )"
         }
       }
-    }
+    },
+    "net10.0-windows7.0/win-x64": {}
   }
 }

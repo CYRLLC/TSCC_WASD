@@ -24,6 +24,52 @@ jobs:
       - name: Build, test and package
         shell: pwsh
         run: ./scripts/package.ps1
+      # Code signing through SignPath Foundation (docs/SIGNING.md). Inactive until the repository
+      # variables SIGNPATH_ORGANIZATION_ID and SIGNPATH_PROJECT_SLUG and the secret
+      # SIGNPATH_API_TOKEN are set; until then releases stay unsigned.
+      - name: Find unsigned executable
+        id: unsigned
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem artifacts/stage-*/TSCC_WASD-*-win-x64/TSCC_WASD.exe | Select-Object -First 1
+          if (-not $exe) { throw 'Staged TSCC_WASD.exe not found.' }
+          "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          "version=$($env:GITHUB_REF_NAME.TrimStart('v'))" >> $env:GITHUB_OUTPUT
+      - name: Upload unsigned executable
+        id: upload-unsigned
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unsigned-exe
+          path: ${{ steps.unsigned.outputs.path }}
+          if-no-files-found: error
+      - name: Sign with SignPath (needs manual approval in SignPath)
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed
+          parameters: |
+            version: "${{ steps.unsigned.outputs.version }}"
+      - name: Repackage with the signed executable
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        shell: pwsh
+        run: |
+          $signed = Join-Path signed TSCC_WASD.exe
+          if ((Get-AuthenticodeSignature -LiteralPath $signed).Status -ne 'Valid') { throw 'SignPath returned an invalid signature.' }
+          $packageDir = Split-Path '${{ steps.unsigned.outputs.path }}' -Parent
+          Copy-Item -LiteralPath $signed -Destination $packageDir -Force
+          $zip = Get-ChildItem artifacts/TSCC_WASD-*-win-x64.zip | Select-Object -First 1
+          Compress-Archive -LiteralPath $packageDir -DestinationPath $zip.FullName -Force
+          $hash = (Get-FileHash -LiteralPath $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($zip.Name)" | Set-Content -LiteralPath ($zip.FullName + '.sha256') -Encoding utf8
       - name: Create draft preview
         shell: pwsh
         env:
