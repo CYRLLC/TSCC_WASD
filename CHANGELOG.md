@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0 — preview
+
+- **No more Steam restarts.** When Steam already holds the physical controller, *automatic
+  reconnect* power-cycles its USB hub port (a real unplug Steam cannot veto); it comes back
+  already hidden, so Steam only sees the DS4. Set up once with one administrator prompt (a copy in
+  `%ProgramFiles%\TSCC_WASD\Helper` plus an on-demand Task Scheduler task), removable in App
+  settings. Bluetooth controllers are asked to turn off and on once; restarting Steam is the fallback.
+- On stop or exit, controllers Steam lost while hidden are reconnected so Steam sees them again.
+- Settings and profile switches apply **while mapping**; changing the input controller rebuilds
+  the mapping but keeps the controllers hidden.
+- New **Pause / Resume** (button and tray menu): neutral DS4, no rumble, controllers stay hidden.
+  **Stop** still releases everything. The tray dot is amber while paused.
+
 ## 0.6.0 — preview
 
 - **One download has everything.** The release ZIP is self-contained (no separate .NET install)

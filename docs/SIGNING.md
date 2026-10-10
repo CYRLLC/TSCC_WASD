@@ -9,7 +9,7 @@ Windows SmartScreen 可能顯示「Windows 已保護您的電腦」。按「其�
 目前 TSCC_WASD 的預覽版**都沒有簽章**。執行前請先比對 ZIP 的 SHA-256 與 Release 附的 `.sha256` 檔：
 
 ```powershell
-Get-FileHash .\TSCC_WASD-0.6.0-win-x64.zip -Algorithm SHA256
+Get-FileHash .\TSCC_WASD-0.7.0-win-x64.zip -Algorithm SHA256
 ```
 
 ## 方案比較
@@ -37,7 +37,7 @@ SignPath Foundation 用**基金會名下的憑證**免費幫開源專案簽章�
 | --- | --- |
 | OSI 認可的開源授權，沒有閉源元件 | ✅ MIT（SDL 改作部分為 zlib） |
 | 不是惡意程式、不是破解或漏洞掃描工具 | ✅ |
-| 要簽章的版本已經公開發布 | ✅ 已有 v0.4.0、v0.4.1 預覽版；之後簽 v0.6.0 也要先公開發布 |
+| 要簽章的版本已經公開發布 | ✅ 已有 v0.4.0、v0.4.1 預覽版；之後簽 v0.7.0 也要先公開發布 |
 | 下載頁有說明程式功能 | ✅ README 與 Release 說明 |
 | 「Code signing policy」頁面（團隊角色、隱私聲明） | ✅ [CODE-SIGNING-POLICY.md](CODE-SIGNING-POLICY.md)，README 首頁有連結 |
 | 隱私聲明使用官方規定的英文句子 | ✅ 已寫在政策頁 |
@@ -55,7 +55,7 @@ SignPath Foundation 用**基金會名下的憑證**免費幫開源專案簽章�
    - 在 Reddit（r/Steam、r/SteamDeck、r/NintendoSwitch、r/pcgaming）、巴哈姆特、PTT 等地方介紹這個工具；
    - 累積 GitHub 星星、Release 下載次數（Release 頁面看得到）和 issue；
    - 記下這些連結，申請時填進 *Reputation*。
-3. **公開發布要簽的版本**（例如 v0.6.0）：push `v0.6.0` 標籤 → 檢查 Actions 產生的草稿 → 按 Publish。
+3. **公開發布要簽的版本**（例如 v0.7.0）：push `v0.7.0` 標籤 → 檢查 Actions 產生的草稿 → 按 Publish。
 
 ## 第 2 步：填寫申請表
 
@@ -119,7 +119,7 @@ SignPath Foundation 用**基金會名下的憑證**免費幫開源專案簽章�
    ```
 
    `product-name`／`product-version` 是條款要求的「metadata 限制」：SignPath 會檢查執行檔內的名稱與版本，
-   不符就拒簽。`version`（例如 `0.6.0`）由 workflow 依標籤自動傳入。
+   不符就拒簽。`version`（例如 `0.7.0`）由 workflow 依標籤自動傳入。
 4. **Signing policy（簽章政策）：** 名稱的 slug 一定要是 **`release-signing`**（workflow 用這個名字）。
    憑證選 SignPath Foundation 提供的，**Approvers** 設成你自己，讓每次簽章都要你手動核准。
 5. **API token：** 建立一個 CI 使用者或個人 API token（要有提交簽章要求的權限），複製起來。

@@ -3,7 +3,7 @@
 免費開源的 Windows 工具：讓遊戲把你的 Xbox 或 Nintendo Switch 2 Pro 手把當成
 PlayStation DualShock 4，顯示 PS 按鍵圖示。對應付費軟體 reWASD 最常用的「偽裝成 DS4」功能，
 改用免費元件 ViGEmBus（虛擬 DS4）與 HidHide（隱藏實體手把）完成。
-目前為 **0.6.0 預覽版**，介面支援繁體中文與英文。
+目前為 **0.7.0 預覽版**，介面支援繁體中文與英文。
 
 [![在 Ko-fi 支持](https://img.shields.io/badge/Ko--fi-支持這個專案-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
@@ -23,7 +23,11 @@ PlayStation DualShock 4，顯示 PS 按鍵圖示。對應付費軟體 reWASD 最
 - **持續存在的虛擬 DS4：** 整段映射期間保持連線；手把斷線時輸出歸零，驅動出錯會自動重連。
 - **自動隱藏實體手把：** 安裝 HidHide 後，啟動映射就會把實體手把藏起來，遊戲只看得到虛擬 DS4，
   圖示不會在 Xbox／PS 之間跳動。停止映射會完整還原原本的 HidHide 設定。
-- **處理 Steam：** 偵測到 Steam 比映射早開（Steam Input 會繼續轉送實體手把）時，提示並可一鍵重啟 Steam。
+- **不必再重啟 Steam：** Steam 比映射早開、握著實體手把時，「自動重新連接」會讓 USB 手把斷電重新連接一兩秒，
+  Steam 就會放開它，只看到虛擬 DS4。只需設定一次（一次管理員權限），之後不再詢問。藍牙手把關開一次即可；
+  重啟 Steam 只當備案。
+- **不必停止就能改設定：** 映射中修改設定、切換設定檔都會立即套用。「暫停」讓遊戲收到放開所有按鍵的 DS4，
+  實體手把仍保持隱藏，繼續時不必處理 Steam；「停止」則完全釋放手把。
 - **震動、PS 鍵與體感：** 遊戲的震動會轉給 Xbox 或 NS2 Pro；Xbox 的 Guide 鍵與 NS2 的 Home 鍵當作 PS 鍵，
   NS2 的截圖鍵當作觸控板按下；NS2 Pro 的陀螺儀與加速度計會轉成 DS4 體感。
 - **設定一次就好：** 可選擇登入 Windows 時自動啟動、縮在系統匣直接映射，並在隱藏手把後才啟動或重啟 Steam，
@@ -52,7 +56,7 @@ NS2 Pro 僅支援 USB，C 鍵與背面 GL/GR 尚未映射。
    也可以從[官方下載頁](https://docs.nefarius.at/Downloads/)自行安裝。ViGEmBus 已停止維護，
    請參考[上游公告](https://docs.nefarius.at/projects/ViGEm/End-of-Life/)。
 4. 輸入手把保持「自動偵測」，勾選「映射時自動隱藏實體手把」，按「啟動映射」。
-5. 若提示 Steam 已在執行，選「是」重新啟動 Steam。
+5. 若提示 Steam 已在執行，選「是」設定自動重新連接（只需一次），或選「否」這次先重啟 Steam。
 6. **最後才開遊戲。**
 
 ### 建議：開機自動啟動
@@ -68,11 +72,17 @@ HidHide 只能阻止程式「打開」手把，不能把已經打開的手把搶
 
 - **遊戲已經開著：** 啟動映射後請重開遊戲。
 - **Steam 已經開著：** Steam Input 會繼續把實體手把轉給 Steam 遊戲，圖示就會在 Xbox／PS 間交替。
-  映射後重啟 Steam 即可（程式會詢問）。該遊戲的 Steam Input 請保持「預設／啟用」：
+  設定好「自動重新連接」後，程式會讓 USB 手把斷電重新連接，手把回來時已經對 Steam 隱藏；沒設定時則詢問是否重啟 Steam。
+  該遊戲的 Steam Input 請保持「預設／啟用」：
   像人中之龍 0 這類遊戲靠 Steam Input 決定 PS 圖示，停用後反而會顯示 Xbox 圖示。
 
-停止映射後實體手把會恢復可見；關閉 TSCC_WASD 不會關閉 Steam。若 Steam 是在手把被隱藏期間啟動的，
-停止映射或關閉程式時會詢問是否再重啟一次，讓 Steam 重新認得實體手把。
+短暫休息請用「暫停」而不是「停止」：手把仍保持隱藏，繼續時不必處理 Steam。停止映射後實體手把會恢復可見；
+關閉 TSCC_WASD 不會關閉 Steam。若 Steam 在隱藏期間失去了手把，停止或關閉時會自動重新連接
+（沒設定自動重新連接時則詢問是否重啟 Steam），讓 Steam 重新認得實體手把。
+
+**自動重新連接**會把 TSCC_WASD 複製到 `%ProgramFiles%\TSCC_WASD\Helper`（只有管理員能修改），
+並建立一個只在需要時執行的排程工作 `\TSCC_WASD\ReconnectControllers`，以最高權限讓已連接的 Xbox／NS2 Pro
+手把所在的 USB 埠斷電重新連接。可在「程式設定 → 移除」刪除。Xbox 無線接收器會整個重新連接，上面所有手把都會重連。
 
 ## 運作方式
 
@@ -101,7 +111,9 @@ NS2 Pro 的細節見 [NS2 Pro 設定說明](NS2-PRO.md)，常見問題見[疑難
 
 1. 停止映射並關閉 TSCC_WASD（會還原 HidHide 設定）。若有開「登入 Windows 時自動啟動」，先取消勾選以移除開機項目。
 2. 刪除解壓出來的 TSCC_WASD 資料夾；若要一併刪除設定檔、設定與日誌，再刪除 `%APPDATA%\TSCC_WASD`。
-3. 視需要到「Windows 設定 → 應用程式 → 已安裝的應用程式」解除安裝 **ViGEmBus** 與 **HidHide**
+3. 若設定過「自動重新連接」，刪除資料夾前先按「程式設定 → 移除」（或以管理員身分刪除 `%ProgramFiles%\TSCC_WASD`
+   與工作排程器中的 `\TSCC_WASD\ReconnectControllers`）。
+4. 視需要到「Windows 設定 → 應用程式 → 已安裝的應用程式」解除安裝 **ViGEmBus** 與 **HidHide**
    （DS4Windows 等其他工具可能也在使用）。
 
 ## 回報問題

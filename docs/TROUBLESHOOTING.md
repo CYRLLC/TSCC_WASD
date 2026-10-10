@@ -10,6 +10,8 @@
 | Install drivers says the hash does not match | The installer in `drivers` was changed or damaged; download the release ZIP again |
 | Waiting for controller | Confirm the controller is connected (NS2 Pro over USB); if hiding was configured manually, check HidHide's allowed executable path |
 | Duplicate presses / prompts flicker Xbox↔PS | Install HidHide and keep "hide physical controllers while mapping" on; start mapping before the game; restart Steam if it started first (TSCC_WASD offers this); stop other mappers |
+| Steam still sees the real controller after automatic reconnect | Bluetooth controllers can't be cycled: turn the controller off and on. On a USB hub that refuses port cycling, replug the cable or click **Restart Steam** |
+| Automatic reconnect needs setting up again | TSCC_WASD was updated; the helper copy must match the running version. Click **App settings → Set up automatic reconnect** once |
 | Still seeing Xbox icons | Confirm native DS4/game artwork support and review Steam Input settings |
 | Settings fail to load | Preserve broken JSON, restore `.bak` or fix validation errors, then reload |
 | Settings lost after exit | Save all before closing; edits and imports are not auto-saved |

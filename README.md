@@ -5,7 +5,7 @@ controller as a PlayStation DualShock 4, so they show PS button prompts.**
 
 It covers one common reWASD use case ("pretend my controller is a DS4") using free,
 open components: ViGEmBus for the virtual DS4 and HidHide to hide the real controller.
-Built with C# / .NET 10 / WPF. **MIT licensed · v0.6.0 preview.** English and Traditional Chinese UI.
+Built with C# / .NET 10 / WPF. **MIT licensed · v0.7.0 preview.** English and Traditional Chinese UI.
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/ynyr5566)
 
@@ -31,8 +31,14 @@ details and app settings sit in collapsible sections (shown expanded
 - **Automatic physical-controller hiding.** When HidHide is installed, starting a mapping
   hides the real controller from games so they only see the DS4. Prompts stop flipping
   between Xbox and PS. Stopping restores your previous HidHide settings exactly.
-- **Steam-aware.** Detects a Steam client that grabbed the real controller before hiding
-  started, and offers to restart Steam so Steam Input only sees the DS4.
+- **No more Steam restarts.** If Steam grabbed the real controller before hiding started,
+  **automatic reconnect** power-cycles the controller's USB port for a second or two, so Steam
+  lets go and only sees the DS4. It is set up once (one administrator prompt) and never asks
+  again. Bluetooth controllers just need to be turned off and on once. Restarting Steam remains
+  the fallback.
+- **Change settings without stopping.** Edits and profile switches apply while mapping, and
+  **Pause** gives games a neutral DS4 while the real controllers stay hidden, so nothing has to
+  be re-detected. **Stop** still releases everything.
 - **Rumble, PS button and motion.** Game rumble is forwarded to the Xbox or NS2 Pro. The Xbox
   Guide and NS2 Home buttons act as the PS button, and NS2 Capture as the touchpad click. The NS2
   Pro gyro and accelerometer become DS4 motion.
@@ -75,7 +81,8 @@ are not mapped. See the [roadmap](PLAN.md).
    [official Nefarius downloads](https://docs.nefarius.at/Downloads/).)
 4. Keep **Input = Auto-detect** and **Hide physical controllers while mapping** checked,
    then click **Start mapping**.
-5. If TSCC_WASD says Steam was already running, choose **Yes** to restart Steam.
+5. If TSCC_WASD says Steam was already running, choose **Yes** to set up automatic reconnect
+   (once), or **No** to restart Steam this time.
 6. **Then** launch the game.
 
 ### Recommended: start with Windows
@@ -93,14 +100,23 @@ from a program that already has it open. Two situations follow from that:
 
 - **The game was already running.** Restart the game after mapping has started.
 - **Steam was already running.** Steam Input keeps forwarding the real controller to Steam
-  games, so prompts alternate between Xbox and PS. Restart Steam once mapping is running;
-  TSCC_WASD offers to do this for you. Keep the game's Steam Input setting on *default/enabled*.
+  games, so prompts alternate between Xbox and PS. With **automatic reconnect** set up,
+  TSCC_WASD power-cycles the USB port so the controller comes back already hidden from Steam;
+  otherwise it offers to restart Steam. Keep the game's Steam Input setting on *default/enabled*.
   Games such as *Yakuza 0 Director's Cut* get their PS prompts from Steam Input; with
   Steam Input disabled they fall back to Xbox prompts.
 
-After you stop mapping, the controller is visible again. Closing TSCC_WASD never closes
-Steam. If Steam started while the controllers were hidden, TSCC_WASD asks on stop or exit
-whether to restart Steam once more so Steam sees the real controller again.
+Use **Pause** rather than **Stop** for short breaks: the controllers stay hidden, so resuming
+needs nothing from Steam. After you stop mapping, the controller is visible again. Closing
+TSCC_WASD never closes Steam. If Steam lost the controller while it was hidden, TSCC_WASD
+reconnects it on stop or exit (or, without automatic reconnect, offers to restart Steam) so
+Steam sees the real controller again.
+
+**Automatic reconnect** copies TSCC_WASD to `%ProgramFiles%\TSCC_WASD\Helper` (only
+administrators can change that folder) and registers an on-demand task,
+`\TSCC_WASD\ReconnectControllers`, that runs it with highest privileges to cycle the ports of
+connected Xbox / NS2 Pro controllers. Remove it with **App settings → Remove**. An Xbox
+Wireless Adapter is cycled as a whole, so every controller paired with it reconnects.
 
 ## How it works
 
@@ -176,7 +192,10 @@ Windows** writes a per-user `HKCU\...\Run` entry; turning it off removes it. See
    Windows** is on, turn it off first so the sign-in entry is removed.
 2. Delete the extracted TSCC_WASD folder and, to remove profiles, settings and logs,
    `%APPDATA%\TSCC_WASD`.
-3. Optionally uninstall **ViGEmBus** and **HidHide** in *Windows Settings → Apps → Installed apps*
+3. If you set up **automatic reconnect**, click **App settings → Remove** before deleting the
+   folder (or delete `%ProgramFiles%\TSCC_WASD` and the `\TSCC_WASD\ReconnectControllers`
+   task in Task Scheduler as an administrator).
+4. Optionally uninstall **ViGEmBus** and **HidHide** in *Windows Settings → Apps → Installed apps*
    (other tools such as DS4Windows may also use them).
 
 ## Similar projects

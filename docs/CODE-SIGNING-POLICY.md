@@ -49,7 +49,11 @@ TSCC_WASD has no telemetry and keeps its log (`%APPDATA%\TSCC_WASD\logs`) on you
 ## System changes
 
 While mapping, TSCC_WASD changes HidHide's configuration to hide physical controllers and
-restores it exactly when mapping stops (or on the next launch after a crash). **Start with
+restores it exactly when mapping stops (or on the next launch after a crash). The optional
+**automatic reconnect** helper is only set up when the user agrees to a Windows administrator
+prompt; it copies TSCC_WASD to `%ProgramFiles%\TSCC_WASD\Helper` and registers the on-demand task
+`\TSCC_WASD\ReconnectControllers`, which only power-cycles the USB ports of connected Xbox and
+NS2 Pro controllers. It is removed with **App settings → Remove**. **Start with
 Windows** adds a per-user sign-in entry, removed when the option is turned off. Installing the
 drivers always asks first and runs the official installers with a Windows administrator prompt.
 How to remove everything is described under *Uninstall* in the [README](../README.md#uninstall).

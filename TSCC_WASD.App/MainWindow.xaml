@@ -57,7 +57,10 @@
                                       AutomationProperties.Name="{app:T Zh=設定檔, En=Profile}"/>
                             <WrapPanel Grid.Column="1">
                                 <Button Style="{StaticResource PrimaryButton}" Content="{app:T Zh=啟動映射, En='Start mapping'}" Command="{Binding StartCommand}"/>
-                                <Button Content="{app:T Zh=停止, En=Stop}" Command="{Binding StopCommand}"/>
+                                <Button Content="{Binding PauseButtonText}" Command="{Binding PauseCommand}"
+                                        ToolTip="{app:T Zh='遊戲看到放開所有按鍵的虛擬 DS4；實體手把仍隱藏，繼續時不必處理 Steam', En='Games see a virtual DS4 with nothing pressed; controllers stay hidden, so resuming needs nothing from Steam'}"/>
+                                <Button Content="{app:T Zh=停止, En=Stop}" Command="{Binding StopCommand}"
+                                        ToolTip="{app:T Zh='完全釋放：關閉虛擬 DS4，實體手把恢復可見', En='Release everything: remove the virtual DS4 and show the physical controllers again'}"/>
                                 <Button Content="{app:T Zh='重新啟動 Steam', En='Restart Steam'}" Command="{Binding RestartSteamCommand}"
                                         ToolTip="{app:T Zh='讓 Steam 只看到虛擬 DS4（映射中才可使用）', En='Make Steam see only the virtual DS4 (while mapping)'}"/>
                             </WrapPanel>
@@ -132,7 +135,7 @@
                             <Button Content="{app:T Zh=設定資料夾, En='Settings folder'}" Command="{Binding OpenProfilesCommand}"/>
                         </WrapPanel>
                         <TextBlock Style="{StaticResource Muted}"
-                                   Text="{app:T Zh='編輯後請按「儲存全部」；停止映射後才能編輯。重新載入或關閉會捨棄未儲存的修改。', En='Click Save all after editing; stop mapping to edit. Reloading or closing discards unsaved changes.'}"/>
+                                   Text="{app:T Zh='映射中的修改與切換設定檔會立即套用，不必停止映射。按「儲存全部」才會寫入磁碟；重新載入或關閉會捨棄未儲存的修改。', En='Edits and profile switches apply immediately while mapping; no need to stop. Click Save all to write them to disk; reloading or closing discards unsaved changes.'}"/>
                     </StackPanel>
                 </Expander>
 
@@ -157,6 +160,13 @@
                                   Content="{app:T Zh=自動開始映射後啟動 Steam, En='Launch Steam after an automatic start'}"/>
                         <TextBlock Style="{StaticResource Hint}"
                                    Text="{app:T Zh='建議同時在 Steam 設定關閉「電腦開機時執行 Steam」，讓 Steam 一律在隱藏手把之後才啟動。', En='Also turn off Steam’s own “Run Steam when my computer starts” so Steam always starts after the controllers are hidden.'}"/>
+                        <TextBlock Style="{StaticResource Label}" Text="{app:T Zh=自動重新連接（不必重啟 Steam）, En='Automatic reconnect (no Steam restart)'}"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{Binding ReconnectHelperStatus}"/>
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button Content="{app:T Zh=設定自動重新連接, En='Set up automatic reconnect'}" Command="{Binding SetupReconnectCommand}"
+                                    ToolTip="{app:T Zh='需要一次管理員權限；之後 Steam 握著 USB 手把時會自動重新連接，不必重啟 Steam', En='Needs administrator rights once; afterwards USB controllers held by Steam are reconnected instead of restarting Steam'}"/>
+                            <Button Content="{app:T Zh=移除, En=Remove}" Command="{Binding RemoveReconnectCommand}"/>
+                        </WrapPanel>
                         <CheckBox IsChecked="{Binding MinimizeToTray}"
                                   Content="{app:T Zh=最小化時縮到系統匣, En='Minimize to the notification area'}"/>
                         <CheckBox IsChecked="{Binding CheckUpdatesOnStartup}"

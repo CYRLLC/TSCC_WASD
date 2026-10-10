@@ -121,10 +121,60 @@ public class MappingSessionTests
         Assert.Equal((0, 0), input.Last);
     }
 
+    [Fact]
+    public async Task PauseSendsNeutralWithoutRumbleAndResumes()
+    {
+        var input = new RumbleInput { Held = GamepadButtonFlags.A };
+        var output = new FakeOutput();
+        await using var session = new MappingSession(new MappingProfile(), input, output);
+        Assert.True(session.TryStart());
+        await WaitUntil(() => output.LastState.Gamepad.Buttons == GamepadButtonFlags.A);
+        output.RaiseRumble(200, 50);
+
+        session.Paused = true;
+        Assert.Equal((0, 0), input.Last); // Pausing stops rumble right away.
+        await WaitUntil(() => output.LastState.Gamepad.Buttons == GamepadButtonFlags.None && output.LastMotion is null);
+        output.RaiseRumble(200, 50);
+        Assert.Equal((0, 0), input.Last);
+        Assert.True(session.IsRunning);
+        Assert.True(output.IsConnected); // The virtual DS4 stays, so nothing has to re-detect it.
+
+        session.Paused = false;
+        await WaitUntil(() => output.LastState.Gamepad.Buttons == GamepadButtonFlags.A);
+    }
+
+    [Fact]
+    public async Task ProfileChangesApplyWhileRunning()
+    {
+        var input = new RumbleInput();
+        var output = new FakeOutput();
+        await using var session = new MappingSession(new MappingProfile { DeadZone = 0.1 }, input, output);
+        Assert.True(session.TryStart());
+        await WaitUntil(() => output.LastDeadZone == 0.1);
+        output.RaiseRumble(200, 50);
+
+        session.UpdateProfile(new MappingProfile { DeadZone = 0.3, ForwardRumble = false });
+        await WaitUntil(() => output.LastDeadZone == 0.3);
+        Assert.Equal((0, 0), input.Last); // Turning rumble off stops it.
+        output.RaiseRumble(200, 50);
+        Assert.Equal((0, 0), input.Last);
+    }
+
+    private static async Task WaitUntil(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline) throw new TimeoutException("Condition not met.");
+            await Task.Delay(10);
+        }
+    }
+
     private sealed class RumbleInput : IInputReader, IRumbleTarget, IMotionSource
     {
         public (int Large, int Small) Last { get; private set; }
-        public bool TryGetState(out State state) { state = default; return true; }
+        public GamepadButtonFlags Held { get; init; }
+        public bool TryGetState(out State state) { state = new State { Gamepad = new Gamepad { Buttons = Held } }; return true; }
         public bool TryGetMotion(out MotionSample motion) { motion = new MotionSample(1, 2, 3, 4, 5, 6); return true; }
         public void SetRumble(byte large, byte small) => Last = (large, small);
         public void Dispose() { }
@@ -158,9 +208,11 @@ public class MappingSessionTests
         public event Action<byte, byte>? RumbleRequested;
         public void RaiseRumble(byte large, byte small) => RumbleRequested?.Invoke(large, small);
         public MotionSample? LastMotion { get; private set; }
+        public double LastDeadZone { get; private set; } = double.NaN;
         public void PushState(State state, double deadZone, MotionSample? motion = null)
         {
             LastMotion = motion;
+            LastDeadZone = deadZone;
             if (FailPushes > 0) { FailPushes--; throw new InvalidOperationException("driver failure"); }
             LastState = state;
             Pushed.TrySetResult();

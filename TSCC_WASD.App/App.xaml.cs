@@ -15,6 +15,12 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Elevated helper runs (reconnect, set up, remove) do their one job without any window.
+        if (TSCC_WASD.Core.Services.Setup.ControllerReconnector.TryRunCommand(e.Args) is { } exitCode)
+        {
+            Shutdown(exitCode);
+            return;
+        }
         _instanceMutex = new Mutex(true, @"Local\TSCC_WASD.Desktop", out bool created);
         if (!created)
         {

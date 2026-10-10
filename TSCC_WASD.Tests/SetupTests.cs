@@ -1,6 +1,7 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 using Xunit;
 using TSCC_WASD.Core;
 using TSCC_WASD.Core.Services;
@@ -86,4 +87,50 @@ public class SetupTests
         }
     }
 
+    [Fact]
+    public void PortCycleTargetsTheDeviceOnTheHubPort()
+    {
+        // NS2 Pro over USB: HID interface -> USB interface -> composite device -> hub.
+        DeviceNode[] chain =
+        [
+            new(@"HID\VID_057E&PID_2069&MI_00\8&1", "HidUsb"),
+            new(@"USB\VID_057E&PID_2069&MI_00\7&2", "HidUsb"),
+            new(@"USB\VID_057E&PID_2069\SERIAL", "usbccgp"),
+            new(@"USB\ROOT_HUB30\5&3", "USBHUB3"),
+            new(@"PCI\VEN_8086&DEV_A36D\3&4", "USBXHCI"),
+        ];
+        Assert.Equal(2, UsbPortCycler.HubChildIndex(chain));
+        Assert.False(UsbPortCycler.IsBluetooth(chain));
+
+        DeviceNode[] bluetooth =
+        [
+            new(@"HID\{00001124-0000-1000-8000-00805F9B34FB}_VID&0002045E_PID&0B13\9&1", "HidBth"),
+            new(@"BTHENUM\{00001124-0000-1000-8000-00805F9B34FB}_VID&0002045E_PID&0B13\8&2", "HidBth"),
+            new(@"USB\VID_8087&PID_0026\5&3", "BTHUSB"),
+            new(@"USB\ROOT_HUB30\4&4", "USBHUB3"),
+        ];
+        Assert.True(UsbPortCycler.IsBluetooth(bluetooth));
+        Assert.Null(UsbPortCycler.HubChildIndex([new(@"ROOT\SYSTEM\0001", "ViGEmBus")]));
+    }
+
+    [Fact]
+    public void ReconnectTaskRunsOnDemandWithFixedArgumentsAsTheUser()
+    {
+        string xml = ControllerReconnector.TaskXml(@"C:\Program Files\TSCC_WASD\Helper\TSCC_WASD.exe", @"PC\Name & <Co>");
+        var doc = XDocument.Parse(xml);
+        XNamespace ns = "http://schemas.microsoft.com/windows/2004/02/mit/task";
+        Assert.Equal(@"PC\Name & <Co>", doc.Descendants(ns + "UserId").Single().Value);
+        Assert.Equal("HighestAvailable", doc.Descendants(ns + "RunLevel").Single().Value);
+        Assert.Equal("InteractiveToken", doc.Descendants(ns + "LogonType").Single().Value);
+        Assert.Equal(ControllerReconnector.ReconnectArgument, doc.Descendants(ns + "Arguments").Single().Value);
+        Assert.Empty(doc.Descendants(ns + "Triggers")); // Only runs when TSCC_WASD asks for it.
+    }
+
+    [Fact]
+    public void UnknownCommandLinesAreLeftToTheNormalApp()
+    {
+        Assert.Null(ControllerReconnector.TryRunCommand([]));
+        Assert.Null(ControllerReconnector.TryRunCommand(["--startup"]));
+        Assert.Null(ControllerReconnector.TryRunCommand([ControllerReconnector.InstallArgument])); // Needs the user name.
+    }
 }

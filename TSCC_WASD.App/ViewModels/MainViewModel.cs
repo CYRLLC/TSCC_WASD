@@ -22,7 +22,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private MappingProfile? _selectedProfile;
     private string _statusMessage = L.T("選擇設定檔後啟動映射。", "Choose a profile and start mapping.");
     private string _inputSummary = L.T("尚未啟動映射", "Mapping not started");
-    private bool _isRunning, _busy, _closing, _loadFailed;
+    private bool _isRunning, _isPaused, _busy, _closing, _loadFailed;
+    private bool? _reconnectInstalled;
     private DateTime? _hiddenSince;
     private string _dependencyStatus = DependencyChecker.BuildStatusText();
 
@@ -33,16 +34,38 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         Settings = _settingsStore.Load();
         StartCommand = Command(() => StartAsync(automatic: false, atSignIn: false), () => !IsRunning && SelectedProfile is not null);
         StopCommand = Command(StopAsync, () => IsRunning);
+        PauseCommand = Command(() =>
+        {
+            IsPaused = !IsPaused;
+            StatusMessage = IsPaused
+                ? L.T("已暫停：遊戲看到的是放開所有按鍵的虛擬 DS4，實體手把仍隱藏，Steam 不會重新抓到它。",
+                    "Paused: games see a virtual DS4 with nothing pressed; the controllers stay hidden so Steam can't grab them.")
+                : L.T("已繼續映射。", "Mapping resumed.");
+            return Task.CompletedTask;
+        }, () => IsRunning);
+        SetupReconnectCommand = Command(async () =>
+        {
+            if (await SetUpReconnectHelperAsync() && IsRunning && SteamHelper.IsRunning) await ReconnectControllersAsync();
+        });
+        RemoveReconnectCommand = Command(async () =>
+        {
+            bool removed = await ControllerReconnector.UninstallAsync();
+            _reconnectInstalled = null;
+            RaisePropertyChanged(nameof(ReconnectHelperStatus));
+            StatusMessage = removed
+                ? L.T("已移除自動重新連接工具。", "The automatic reconnect helper was removed.")
+                : L.T("沒有移除自動重新連接工具（已取消或失敗）。", "The automatic reconnect helper was not removed (cancelled or failed).");
+        }, () => ControllerReconnector.IsPresent);
         RestartSteamCommand = Command(() => RestartSteamAsync(silent: false), () => IsRunning);
         ReloadCommand = Command(() => { Reload(); return Task.CompletedTask; }, () => !IsRunning);
-        SaveCommand = Command(() => { Save(); return Task.CompletedTask; }, () => !IsRunning && !_loadFailed);
+        SaveCommand = Command(() => { Save(); return Task.CompletedTask; }, () => !_loadFailed);
         NewCommand = Command(() =>
         {
             var profile = new MappingProfile { Name = L.T("新設定檔", "New profile") };
             Profiles.Add(profile);
             SelectedProfile = profile;
             return Task.CompletedTask;
-        }, () => !IsRunning && !_loadFailed);
+        }, () => !_loadFailed);
         DeleteCommand = Command(() =>
         {
             if (SelectedProfile is not null) Profiles.Remove(SelectedProfile);
@@ -75,7 +98,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
                 StatusMessage = L.T("匯出完成。", "Exported.");
             }
             return Task.CompletedTask;
-        }, () => !IsRunning && Profiles.Count > 0);
+        }, () => Profiles.Count > 0);
         InstallDepsCommand = Command(async () =>
         {
             var missing = DriverInstaller.Missing();
@@ -172,7 +195,36 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public MappingProfile? SelectedProfile
     {
         get => _selectedProfile;
-        set { if (SetField(ref _selectedProfile, value)) NotifyState(); }
+        set
+        {
+            var previous = _selectedProfile;
+            if (!SetField(ref _selectedProfile, value)) return;
+            if (previous is not null) previous.PropertyChanged -= OnSelectedProfileEdited;
+            if (value is not null) value.PropertyChanged += OnSelectedProfileEdited;
+            NotifyState();
+            if (IsRunning && value is not null) _ = ApplyLiveAsync(value, switched: true);
+        }
+    }
+
+    private void OnSelectedProfileEdited(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (IsRunning && sender is MappingProfile profile) _ = ApplyLiveAsync(profile, switched: false);
+    }
+
+    /// <summary>Edits and profile switches take effect immediately; mapping (and hiding) keeps running.</summary>
+    private async Task ApplyLiveAsync(MappingProfile profile, bool switched)
+    {
+        string? message;
+        try { message = await _coordinator.ApplyProfileAsync(profile); }
+        catch (Exception ex) { message = L.T($"無法套用設定：{ex.Message}", $"Could not apply the change: {ex.Message}"); }
+        if (switched)
+        {
+            Settings.LastProfileId = profile.Id;
+            SaveSettings();
+            message ??= L.T($"已切換到「{profile.Name}」，不需重新啟動映射。", $"Switched to \"{profile.Name}\" without restarting mapping.");
+        }
+        if (message is not null) StatusMessage = message;
+        IsRunning = _coordinator.IsRunning;
     }
     public string StatusMessage { get => _statusMessage; private set => SetField(ref _statusMessage, value); }
     public string InputSummary { get => _inputSummary; private set => SetField(ref _inputSummary, value); }
@@ -183,11 +235,40 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set
         {
             if (!SetField(ref _isRunning, value)) return;
+            if (!value) IsPaused = false;
             RaisePropertyChanged(nameof(StatusTitle));
             NotifyState();
         }
     }
-    public bool CanEdit => !IsRunning && !_busy && !_closing && !_loadFailed;
+    public bool IsPaused
+    {
+        get => _isPaused;
+        private set
+        {
+            if (!SetField(ref _isPaused, value)) return;
+            _coordinator.Paused = value;
+            RaisePropertyChanged(nameof(StatusTitle));
+            RaisePropertyChanged(nameof(PauseButtonText));
+        }
+    }
+
+    public string PauseButtonText => IsPaused ? L.T("繼續", "Resume") : L.T("暫停", "Pause");
+
+    /// <summary>Profile fields can be edited while mapping; edits apply immediately.</summary>
+    public bool CanEdit => !_busy && !_closing && !_loadFailed;
+
+    public string ReconnectHelperStatus
+    {
+        get
+        {
+            _reconnectInstalled ??= ControllerReconnector.IsInstalled;
+            return _reconnectInstalled.Value
+                ? L.T("已設定：Steam 握著手把時會自動重新連接 USB 手把，不必重啟 Steam。", "Set up: when Steam holds a controller, USB controllers are reconnected automatically instead of restarting Steam.")
+                : ControllerReconnector.NeedsUpdate
+                    ? L.T("需要更新（TSCC_WASD 已更新），設定一次即可。", "Needs an update for this TSCC_WASD version; set it up once more.")
+                    : L.T("尚未設定：Steam 握著手把時只能重啟 Steam。", "Not set up: when Steam holds a controller, Steam has to restart.");
+        }
+    }
 
     public AppSettings Settings { get; }
 
@@ -240,6 +321,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }
+    public ICommand PauseCommand { get; }
+    public ICommand SetupReconnectCommand { get; }
+    public ICommand RemoveReconnectCommand { get; }
     public ICommand RestartSteamCommand { get; }
     public ICommand ReloadCommand { get; }
     public ICommand SaveCommand { get; }
@@ -262,7 +346,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public string VersionText => $"v{UpdateChecker.CurrentVersion.ToString(3)}";
 
     /// <summary>Headline of the status card.</summary>
-    public string StatusTitle => IsRunning ? L.T("映射中", "Mapping") : L.T("已停止", "Stopped");
+    public string StatusTitle => !IsRunning ? L.T("已停止", "Stopped") : IsPaused ? L.T("已暫停", "Paused") : L.T("映射中", "Mapping");
 
     internal static void OpenUrl(string url) =>
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
@@ -415,6 +499,12 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
         if (_coordinator.SteamSeesPhysicalControllers)
         {
+            // Preferred: reconnect the USB controllers so Steam loses them; no restart, no prompt.
+            if (ReconnectAvailable)
+            {
+                await ReconnectControllersAsync();
+                return;
+            }
             if (automatic && Settings.ManageSteam)
             {
                 await RestartSteamAsync(silent: atSignIn);
@@ -423,14 +513,21 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             if (automatic) return;
             var answer = MessageBox.Show(
                 L.T("Steam 在隱藏實體手把之前就已啟動，仍握有實體手把，會透過 Steam Input 轉給遊戲，造成按鍵圖示在 Xbox／PS 之間交替。\n\n" +
-                    "要現在重新啟動 Steam 嗎？重啟後 Steam 只會看到虛擬 DS4，Steam 遊戲會顯示 PS 圖示。\n" +
-                    "（請先關閉正在執行的 Steam 遊戲；遊戲的 Steam Input 請保持啟用／預設。）",
+                    "• 是：設定「自動重新連接」（只需一次，會要求一次管理員權限）。之後 TSCC_WASD 會自動重新連接 USB 手把讓 Steam 放開它，不必再重啟 Steam。\n" +
+                    "• 否：這次先重新啟動 Steam（請先關閉正在執行的 Steam 遊戲）。\n" +
+                    "• 取消：暫不處理。",
                     "Steam started before the physical controllers were hidden, so it still holds them and Steam Input forwards " +
                     "them to games, making prompts alternate between Xbox and PS.\n\n" +
-                    "Restart Steam now? Afterwards Steam only sees the virtual DS4 and Steam games show PS prompts.\n" +
-                    "(Close any running Steam game first, and keep the game's Steam Input on default/enabled.)"),
-                "TSCC_WASD", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (answer == MessageBoxResult.Yes) await RestartSteamAsync(silent: false);
+                    "• Yes: set up automatic reconnect (once, with one administrator prompt). From then on TSCC_WASD reconnects USB " +
+                    "controllers so Steam lets go of them, with no Steam restart.\n" +
+                    "• No: restart Steam this time (close any running Steam game first).\n" +
+                    "• Cancel: leave it for now."),
+                AppPaths.Name, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.Yes)
+            {
+                if (await SetUpReconnectHelperAsync(confirm: false)) await ReconnectControllersAsync();
+            }
+            else if (answer == MessageBoxResult.No) await RestartSteamAsync(silent: false);
             else StatusMessage = L.T($"{result.message} Steam 仍看得到實體手把，可稍後按「重新啟動 Steam」。",
                 $"{result.message} Steam can still see the physical controller; click Restart Steam later.");
         }
@@ -439,6 +536,65 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             if (SteamHelper.LaunchIfNotRunning(silent: atSignIn))
                 StatusMessage = L.T($"{result.message} 已在隱藏手把後啟動 Steam。", $"{result.message} Steam was started after hiding the controllers.");
         }
+    }
+
+    private bool _reconnectedWhileHidden;
+
+    private bool ReconnectAvailable => _reconnectInstalled ??= ControllerReconnector.IsInstalled;
+
+    /// <summary>Sets up the elevated reconnect helper (one administrator prompt). True when it is ready.</summary>
+    private async Task<bool> SetUpReconnectHelperAsync(bool confirm = true)
+    {
+        if (confirm && MessageBox.Show(
+                L.T("「自動重新連接」會在 Steam 握著實體手把時，讓 USB 手把斷電重新連接一次（約 1–3 秒），Steam 就會放開它，不必重啟 Steam。\n\n" +
+                    $"設定時 Windows 會要求一次管理員權限：TSCC_WASD 會複製到 {ControllerReconnector.HelperDirectory}，並建立一個只在需要時執行的排程工作。" +
+                    "之後不再詢問。可隨時在「程式設定」移除。\n\n要現在設定嗎？",
+                    "Automatic reconnect power-cycles USB controllers once (about 1–3 seconds) when Steam holds them, so Steam lets go " +
+                    "without a restart.\n\nSetting it up asks for administrator rights once: TSCC_WASD is copied to " +
+                    $"{ControllerReconnector.HelperDirectory} and an on-demand scheduled task is created. You won't be asked again, " +
+                    "and you can remove it any time in App settings.\n\nSet it up now?"),
+                AppPaths.Name, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return false;
+        StatusMessage = L.T("正在設定自動重新連接（請在 Windows 提示中允許）…", "Setting up automatic reconnect (allow the Windows prompt)…");
+        bool ok = await ControllerReconnector.InstallAsync();
+        _reconnectInstalled = null;
+        RaisePropertyChanged(nameof(ReconnectHelperStatus));
+        ok = ok && ReconnectAvailable;
+        StatusMessage = ok
+            ? L.T("自動重新連接已設定完成，之後不必再重啟 Steam。", "Automatic reconnect is set up; Steam no longer needs restarting.")
+            : L.T("沒有完成自動重新連接的設定（已取消或失敗）。可稍後在「程式設定」再試。", "Automatic reconnect was not set up (cancelled or failed). You can try again in App settings.");
+        return ok;
+    }
+
+    /// <summary>Power-cycles the controllers' USB ports through the helper and reports what happened.</summary>
+    private async Task ReconnectControllersAsync(bool afterStop = false)
+    {
+        StatusMessage = afterStop
+            ? L.T("正在重新連接手把，讓 Steam 重新認得它…", "Reconnecting controllers so Steam detects them again…")
+            : L.T("正在重新連接 USB 手把，讓 Steam 放開它…", "Reconnecting USB controllers so Steam lets go of them…");
+        var result = await ControllerReconnector.ReconnectAsync();
+        if (result is null)
+        {
+            StatusMessage = L.T("自動重新連接沒有回應。可以改按「重新啟動 Steam」，或拔插一次手把。",
+                "Automatic reconnect did not respond. Click Restart Steam, or unplug and replug the controller.");
+            return;
+        }
+        if (!afterStop) _reconnectedWhileHidden = true;
+        var parts = new List<string>();
+        if (result.UsbPorts > 0)
+            parts.Add(afterStop
+                ? L.T($"已重新連接 {result.UsbPorts} 個 USB 手把，Steam 可以再看到它們。", $"Reconnected {result.UsbPorts} USB controller(s); Steam can see them again.")
+                : L.T($"已重新連接 {result.UsbPorts} 個 USB 手把，Steam 不再握著實體手把。", $"Reconnected {result.UsbPorts} USB controller(s); Steam no longer holds them."));
+        if (result.WirelessAdapter)
+            parts.Add(L.T("無線接收器上的手把會一起重新連線，請稍候幾秒。", "Controllers on the wireless adapter reconnect too; give them a few seconds."));
+        if (result.Bluetooth > 0)
+            parts.Add(L.T($"{result.Bluetooth} 個藍牙手把無法自動重新連接，請把手把關閉再打開一次。",
+                $"{result.Bluetooth} Bluetooth controller(s) can't be reconnected automatically; turn the controller off and on once."));
+        if (result.Errors.Count > 0)
+            parts.Add(L.T($"有 {result.Errors.Count} 個連接埠失敗，請拔插一次手把或重新啟動 Steam。", $"{result.Errors.Count} port(s) failed; replug the controller or restart Steam."));
+        if (parts.Count == 0) parts.Add(L.T("沒有找到需要重新連接的手把。", "No connected controllers needed reconnecting."));
+        foreach (var error in result.Errors) AppLog.Warn($"Reconnect: {error}");
+        StatusMessage = string.Join(" ", parts);
     }
 
     private async Task RestartSteamAsync(bool silent)
@@ -463,8 +619,18 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     public async Task OfferSteamRestartAfterHidingAsync()
     {
         var since = _hiddenSince;
+        bool reconnected = _reconnectedWhileHidden;
         _hiddenSince = null;
-        if (since is null || !SteamHelper.StartedSince(since.Value)) return;
+        _reconnectedWhileHidden = false;
+        if (since is null || !SteamHelper.IsRunning) return;
+        // Steam lost the controllers (started while hidden, or reconnected away); a reconnect makes them arrive again.
+        if (!SteamHelper.StartedSince(since.Value) && !reconnected) return;
+        if (ReconnectAvailable)
+        {
+            await ReconnectControllersAsync(afterStop: true);
+            return;
+        }
+        if (!SteamHelper.StartedSince(since.Value)) return;
         var answer = MessageBox.Show(
             L.T("Steam 是在實體手把被隱藏期間啟動的，現在可能看不到實體手把。\n\n" +
                 "要再重新啟動 Steam 一次，讓它重新認得實體手把嗎？\n（請先關閉正在執行的 Steam 遊戲。）",
